@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Loader, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader, Search, Filter, ChevronLeft, ChevronRight, XCircle } from 'lucide-react';
 
 export function UsersPanel() {
   const [users, setUsers] = useState([]);
@@ -9,6 +9,7 @@ export function UsersPanel() {
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -127,7 +128,10 @@ export function UsersPanel() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text/60">
-                      <button className="text-primary hover:text-primary/80">
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="text-primary hover:text-primary/80"
+                      >
                         Ver detalles
                       </button>
                     </td>
@@ -160,6 +164,49 @@ export function UsersPanel() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Modal de Detalles */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-surface rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-primary">Detalles del Usuario</h2>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="text-text/60 hover:text-text"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-text/80">Nombre</h3>
+                <p className="mt-1 text-text">{selectedUser.nombre}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-text/80">Email</h3>
+                <p className="mt-1 text-text">{selectedUser.email}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-text/80">Plan</h3>
+                <p className="mt-1 text-text">
+                  {selectedUser.subscriptions?.length > 0 ? 'Premium' : 'Gratuito'}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-text/80">Estado</h3>
+                <p className="mt-1 text-text">
+                  {selectedUser.subscriptions?.length > 0 ? 'Activo' : 'Inactivo'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

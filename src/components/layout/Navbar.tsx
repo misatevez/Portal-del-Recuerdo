@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Menu, X, Search, Shield } from 'lucide-react';
+import { Heart, Menu, X, Search, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 import { supabase } from '../../lib/supabase';
@@ -33,6 +33,15 @@ export default function Navbar() {
 
     checkAdminStatus();
   }, [user]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // No need to navigate here, AuthProvider will handle it
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
 
   return (
     <nav className="bg-surface/90 backdrop-blur-md border-b border-primary/20 fixed w-full z-50">
@@ -69,6 +78,13 @@ export default function Navbar() {
                 <Link to="/perfil" className="text-text hover:text-primary transition-colors">
                   Mi Perfil
                 </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-text hover:text-primary transition-colors flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar Sesión
+                </button>
               </>
             ) : (
               <>
@@ -139,6 +155,13 @@ export default function Navbar() {
                 >
                   Mi Perfil
                 </Link>
+                <button
+                  onClick={handleLogout}
+                  className="block px-3 py-2 text-text hover:text-primary rounded-md flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar Sesión
+                </button>
               </>
             ) : (
               <>
