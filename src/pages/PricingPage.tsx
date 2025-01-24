@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Star, Shield, Clock, Image, Users, Loader, Heart } from 'lucide-react';
 import { useAuth } from '../components/auth/AuthProvider';
-import { supabase } from '../lib/supabase';
 import { PaymentDialog } from '../components/payments/PaymentDialog';
 
 interface Plan {
@@ -16,31 +15,17 @@ interface Plan {
 export function PricingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [planes, setPlanes] = React.useState<Plan[]>([]);
-  const [loading, setLoading] = React.useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [facturacionAnual, setFacturacionAnual] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    async function loadPlanes() {
-      try {
-        const { data, error } = await supabase
-          .from('subscription_plans')
-          .select('*')
-          .eq('activo', true)
-          .order('precio');
-
-        if (error) throw error;
-        setPlanes(data || []);
-      } catch (err) {
-        console.error('Error al cargar planes:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadPlanes();
-  }, []);
+  const staticPlan: Plan = {
+    id: 'static-plan',
+    nombre: 'Test Plan',
+    descripcion: 'This is a test plan for Mercado Pago integration.',
+    precio: 5,
+    caracteristicas: ['Feature 1', 'Feature 2', 'Feature 3'],
+  };
 
   const handleSelectPlan = async (plan: Plan) => {
     if (!user) {
@@ -49,18 +34,8 @@ export function PricingPage() {
     }
 
     if (plan.precio === 0) {
-      try {
-        const { error } = await supabase.from('subscriptions').insert({
-          plan_id: plan.id,
-          estado: 'active',
-          fecha_fin: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-        });
-
-        if (error) throw error;
-        navigate('/perfil');
-      } catch (err) {
-        console.error('Error al activar plan gratuito:', err);
-      }
+      // Handle free plan logic here if needed
+      navigate('/perfil');
     } else {
       setSelectedPlan(plan);
     }
@@ -136,63 +111,48 @@ export function PricingPage() {
 
         {/* Grid de Planes */}
         <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {planes.map((plan) => {
-            const precioMensual = plan.precio;
-            const precioAnual = plan.precio * 12 * 0.8; // 20% de descuento
-            const precioFinal = facturacionAnual ? precioAnual / 12 : precioMensual;
-
-            return (
-              <div
-                key={plan.id}
+          
+            <div
+                key={staticPlan.id}
                 className={`
                   relative elegant-card rounded-2xl
-                  ${plan.nombre === 'Premium' ? 'border-2 border-primary md:scale-105' : 'border border-primary/20'}
+                  border border-primary/20
                 `}
               >
-                {plan.nombre === 'Premium' && (
-                  <div className="absolute -top-5 inset-x-0 flex justify-center">
-                    <span className="inline-flex items-center px-4 py-1 rounded-full text-sm font-medium bg-primary text-surface">
-                      <Star className="w-4 h-4 mr-1" />
-                      Más Popular
-                    </span>
-                  </div>
-                )}
-
                 <div className="p-8">
-                  <h3 className="text-xl font-serif text-primary mb-2">{plan.nombre}</h3>
-                  <p className="text-text/80 mb-6">{plan.descripcion}</p>
+                  <h3 className="text-xl font-serif text-primary mb-2">{staticPlan.nombre}</h3>
+                  <p className="text-text/80 mb-6">{staticPlan.descripcion}</p>
                   
                   <div className="flex items-baseline mb-6">
                     <span className="text-4xl font-bold text-primary">
-                      ${precioFinal.toFixed(2)}
+                      ${staticPlan.precio.toFixed(2)}
                     </span>
                     <span className="text-text/60 ml-2">/mes</span>
                   </div>
 
-                  {facturacionAnual && plan.precio > 0 && (
-                    <p className="text-sm text-text/60 mb-6">
-                      Facturado anualmente como ${precioAnual.toFixed(2)}
-                    </p>
-                  )}
-
-                  <button
-                    onClick={() => handleSelectPlan(plan)}
-                    className={`
-                      w-full py-3 px-4 rounded-lg text-sm font-medium
-                      ${plan.nombre === 'Premium'
-                        ? 'elegant-button'
-                        : 'border border-primary/30 text-text hover:bg-primary/10'
-                      }
-                    `}
-                  >
-                    {plan.precio === 0 ? 'Comenzar Gratis' : 'Comenzar'}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleSelectPlan(staticPlan)}
+                      className={`
+                        w-full py-3 px-4 rounded-lg text-sm font-medium
+                        border border-primary/30 text-text hover:bg-primary/10
+                      `}
+                    >
+                      Comenzar
+                    </button>
+                    <button
+                      onClick={() => setSelectedPlan(staticPlan)}
+                      className="w-full py-3 px-4 rounded-lg text-sm font-medium border border-primary/30 text-text hover:bg-primary/10"
+                    >
+                      Probar MercadoPago
+                    </button>
+                  </div>
                 </div>
 
                 <div className="border-t border-primary/20 p-8">
                   <h4 className="text-sm font-medium text-primary mb-4">Incluye:</h4>
                   <ul className="space-y-4">
-                    {plan.caracteristicas.map((feature, index) => (
+                    {staticPlan.caracteristicas.map((feature, index) => (
                       <li key={index} className="flex items-start">
                         <span className="flex-shrink-0 text-primary">
                           {getFeatureIcon(feature)}
@@ -203,8 +163,6 @@ export function PricingPage() {
                   </ul>
                 </div>
               </div>
-            );
-          })}
         </div>
 
         {/* FAQs */}

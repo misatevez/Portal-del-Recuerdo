@@ -10,6 +10,7 @@ export function UsersPanel() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -40,6 +41,24 @@ export function UsersPanel() {
       setTotalPages(Math.ceil((count || 0) / 10));
     } catch (err) {
       console.error('Error loading users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUserDetails = async (userId: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, subscriptions(plan:subscription_plans(nombre))')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setUserDetails(data);
+    } catch (err) {
+      console.error('Error loading user details:', err);
     } finally {
       setLoading(false);
     }
@@ -129,7 +148,10 @@ export function UsersPanel() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text/60">
                       <button
-                        onClick={() => setSelectedUser(user)}
+                        onClick={() => {
+                          setSelectedUser(user);
+                          loadUserDetails(user.id);
+                        }}
                         className="text-primary hover:text-primary/80"
                       >
                         Ver detalles
@@ -180,31 +202,43 @@ export function UsersPanel() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-text/80">Nombre</h3>
-                <p className="mt-1 text-text">{selectedUser.nombre}</p>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader className="w-8 h-8 text-primary animate-spin" />
               </div>
+            ) : userDetails ? (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-text/80">Nombre</h3>
+                  <p className="mt-1 text-text">{userDetails.nombre}</p>
+                </div>
 
-              <div>
-                <h3 className="text-sm font-medium text-text/80">Email</h3>
-                <p className="mt-1 text-text">{selectedUser.email}</p>
+                <div>
+                  <h3 className="text-sm font-medium text-text/80">Email</h3>
+                  <p className="mt-1 text-text">{userDetails.email}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-text/80">Plan</h3>
+                  <p className="mt-1 text-text">
+                    {userDetails.subscriptions?.plan?.nombre || 'Gratuito'}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-text/80">Estado</h3>
+                  <p className="mt-1 text-text">
+                    {userDetails.subscriptions?.estado || 'Inactivo'}
+                  </p>
+                </div>
               </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-text/80">Plan</h3>
-                <p className="mt-1 text-text">
-                  {selectedUser.subscriptions?.length > 0 ? 'Premium' : 'Gratuito'}
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-text/60">
+                  Error al cargar detalles del usuario.
                 </p>
               </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-text/80">Estado</h3>
-                <p className="mt-1 text-text">
-                  {selectedUser.subscriptions?.length > 0 ? 'Activo' : 'Inactivo'}
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
