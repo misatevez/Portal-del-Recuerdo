@@ -146,22 +146,27 @@ function App() {
               ))}
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-8">
-              {recentTributes.map((tribute) => (
-                <TributeCard
-                  key={tribute.id}
-                  id={tribute.id}
-                  nombre={tribute.nombre}
-                  fechaNacimiento={tribute.fecha_nacimiento}
-                  fechaFallecimiento={tribute.fecha_fallecimiento}
-                  imagen={tribute.imagen_principal || 'https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&q=80'}
-                  velasEncendidas={tribute.candles?.[0]?.count || 0}
-                />
-              ))}
-            </div>
+     <div className="min-h-screen">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
+        {recentTributes.map((tribute) => (
+          <TributeCard
+            key={tribute.id}
+            id={tribute.id}
+            nombre={tribute.nombre}
+            fechaNacimiento={tribute.fecha_nacimiento}
+            fechaFallecimiento={tribute.fecha_fallecimiento}
+            imagen={
+              tribute.imagen_principal ||
+              "https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&q=80"
+            }
+            
+          />
+        ))}
+      </div>
+    </div>
           )}
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-4">
             <Link
               to="/explorar"
               className="elegant-button px-8 py-3 rounded-full inline-flex items-center"
