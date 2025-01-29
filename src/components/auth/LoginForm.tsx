@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Mail, Lock, AlertCircle, Heart } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
+const navigate = useNavigate();
+	
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -25,6 +28,7 @@ export function LoginForm() {
       setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
+			navigate("/perfil");
     }
   };
 
