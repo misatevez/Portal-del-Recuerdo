@@ -33,15 +33,12 @@ export function TributeCard({
             }}
           />
         </div>
-        <div className="space-y-2">
+        <div >
           <h3 className="text-xl font-medium text-[#B8860B]">{nombre}</h3>
           <p className="text-[#B8860B]">
             {añoNacimiento}-{añoFallecimiento}
           </p>
-          <div className="flex items-center justify-center text-[#B8860B] text-sm">
-            <Candle className="w-4 h-4 mr-2" />
-            <span>{velasEncendidas} velas encendidas</span>
-          </div>
+        
         </div>
       </div>
     </Link>
