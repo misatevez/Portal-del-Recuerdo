@@ -1,0 +1,12 @@
+.login-input-icon {
+  @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-primary/60;
+}
+
+.login-checkbox {
+  @apply h-4 w-4 rounded border-primary/30 bg-surface text-primary focus:ring-primary/50;
+}
+
+.login-social-button {
+  @apply w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 transition-colors duration-200;
+}
+
