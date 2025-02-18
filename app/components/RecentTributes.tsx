@@ -1,26 +1,43 @@
+"use client"
+
 import Link from "next/link"
 import { TributeCard } from "./TributeCard"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { useEffect, useState } from "react"
+import { supabase } from "../lib/supabase"
+import type { Tribute } from "../types"
 
-async function getRecentTributes() {
-  const supabase = createServerComponentClient({ cookies })
-  const { data, error } = await supabase
-    .from("tributes")
-    .select("*, candles!left(count)")
-    .order("created_at", { ascending: false })
-    .limit(3)
+export default function RecentTributes() {
+  const [recentTributes, setRecentTributes] = useState<Tribute[]>([])
+  const [loading, setLoading] = useState(true)
 
-  if (error) {
-    console.error("Error al cargar homenajes:", error)
-    return []
+  useEffect(() => {
+    async function getRecentTributes() {
+      try {
+        const { data, error } = await supabase
+          .from("tributes")
+          .select("*, candles!left(count)")
+          .order("created_at", { ascending: false })
+          .limit(3)
+
+        if (error) {
+          console.error("Error al cargar homenajes:", error)
+          return
+        }
+
+        setRecentTributes(data || [])
+      } catch (error) {
+        console.error("Error al cargar homenajes:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getRecentTributes()
+  }, [])
+
+  if (loading) {
+    return <div>Cargando homenajes recientes...</div>
   }
-
-  return data || []
-}
-
-export default async function RecentTributes() {
-  const recentTributes = await getRecentTributes()
 
   return (
     <section className="py-20 px-4 bg-surface">
@@ -60,4 +77,3 @@ export default async function RecentTributes() {
     </section>
   )
 }
-

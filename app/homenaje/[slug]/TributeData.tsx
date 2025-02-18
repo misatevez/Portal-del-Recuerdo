@@ -1,49 +1,75 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { notFound } from "next/navigation"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "../../lib/supabase"
 import { TributeContent } from "./TributeContent"
+import type { Tribute } from "../../types"
 
-export default async function TributeData({ params }: { params: { slug: string } }) {
-  const supabase = createServerComponentClient({ cookies })
+export default function TributeData({ params }: { params: { slug: string } }) {
+  const [tribute, setTribute] = useState<Tribute | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+  const [session, setSession] = useState<any>(null)
+  const router = useRouter()
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  useEffect(() => {
+    // Obtener la sesión
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
 
-  const { data: tribute, error } = await supabase
-    .from("tributes")
-    .select(`
-      *,
-      profiles:created_by(nombre),
-      comments(
-        id,
-        contenido,
-        created_at,
-        profiles(nombre)
-      ),
-      candles(
-        id,
-        mensaje,
-        profiles(nombre)
-      ),
-      photos(
-        id,
-        url,
-        descripcion
-      )
-    `)
-    .eq("slug", params.slug)
-    .single()
+    // Obtener el homenaje
+    async function fetchTribute() {
+      try {
+        const { data, error } = await supabase
+          .from("tributes")
+          .select(`
+            *,
+            profiles:created_by(nombre),
+            comments(
+              id,
+              contenido,
+              created_at,
+              profiles(nombre)
+            ),
+            candles(
+              id,
+              mensaje,
+              profiles(nombre)
+            ),
+            photos(
+              id,
+              url,
+              descripcion
+            )
+          `)
+          .eq("slug", params.slug)
+          .single()
 
-  if (error) {
-    console.error("Error fetching tribute:", error)
-    notFound()
+        if (error) throw error
+        if (!data) throw new Error("Homenaje no encontrado")
+
+        setTribute(data)
+      } catch (err) {
+        setError(err as Error)
+        console.error("Error fetching tribute:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTribute()
+  }, [params.slug])
+
+  if (loading) {
+    return <div>Cargando...</div>
   }
 
-  if (!tribute) {
-    notFound()
+  if (error || !tribute) {
+    router.push("/404")
+    return null
   }
 
   return <TributeContent tribute={tribute} user={session?.user || null} />
 }
-

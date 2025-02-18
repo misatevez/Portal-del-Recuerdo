@@ -23,7 +23,8 @@ export function RegisterForm() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // 1. Registrar usuario
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -33,9 +34,23 @@ export function RegisterForm() {
         },
       })
 
-      if (error) throw error
+      if (authError) throw authError
 
-      // Redirect to profile page on success
+      if (authData.user) {
+        // 2. Crear perfil
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user.id,
+              nombre: nombre,
+            }
+          ])
+
+        if (profileError) throw profileError
+      }
+
+      // 3. Redirigir al perfil
       router.push("/perfil")
     } catch (err: any) {
       setError(
@@ -43,7 +58,7 @@ export function RegisterForm() {
           ? "El usuario ya está registrado"
           : err.message === "Invalid email or password"
             ? "Correo electrónico o contraseña inválidos"
-            : "Error al registrar usuario. Por favor, inténtalo de nuevo.",
+            : "Error al registrar usuario. Por favor, inténtalo de nuevo."
       )
     } finally {
       setLoading(false)
@@ -199,4 +214,3 @@ export function RegisterForm() {
     </div>
   )
 }
-
