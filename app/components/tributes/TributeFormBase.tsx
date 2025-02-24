@@ -146,7 +146,7 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
             <span className="sr-only">Seleccionar imagen</span>
             <input
               type="file"
-              accept="image/*"
+              accept=".jpg, .jpeg, .webp, .png, .gif"
               onChange={(e) => {
                 const file = e.target.files?.[0] || null
                 setFormData({ ...formData, imagenPrincipal: file })
@@ -159,6 +159,9 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
                 hover:file:bg-primary/20"
             />
           </label>
+          <p className="mt-2 text-sm text-text/60 font-montserrat">
+            Formatos aceptados: JPG, WEBP, PNG, GIF. Tamaño máximo: 5MB.
+          </p>
         </div>
         {formData.imagenPrincipal && (
           <p className="mt-2 text-sm text-text/60 font-montserrat">
