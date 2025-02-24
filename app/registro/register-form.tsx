@@ -157,12 +157,20 @@ export function RegisterForm() {
               required
             />
             <label htmlFor="terminos" className="ml-2 block text-sm text-text/80 font-montserrat">
-              Acepto los{" "}
-              <Link href="/terminos" target="_blank" className="text-primary hover:text-primary/80">
-                términos y condiciones
-              </Link>
+              Declaro haber leído y aceptar los{" "} terminos y condiciones
+              
             </label>
+           
           </div>
+
+          <div className="flex items-center justify-center">
+            
+          <Link href="/terminos" target="_blank" className="hover:text-primary/80 underline">
+                Leer los terminos y condiciones
+              </Link>
+            </div>
+        
+
           {!aceptaTerminos && (
             <p className="mt-2 text-sm text-red-500 font-montserrat">
               Debes aceptar los términos y condiciones para continuar.
