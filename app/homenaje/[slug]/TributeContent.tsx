@@ -1,156 +1,242 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { PhotoGallery } from "../../components/tributes/PhotoGallery"
-import { EditTributeForm } from "../../components/tributes/EditTributeForm"
-import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
-import { TributeHeader } from "../../components/tributes/TributeHeader"
-import { TributeBiography } from "../../components/tributes/TributeBiography"
-import { TributeActions } from "../../components/tributes/TributeActions"
-import { CandleSection } from "../../components/tributes/CandleSection"
+import { Heart, MessageCircle, Edit, Trash2, Star, Calendar, MapPin } from "lucide-react"
+import { ShareButton } from "../../components/sharing/ShareButton"
 import { CommentSection } from "../../components/tributes/CommentSection"
-import toast, { Toaster } from "react-hot-toast"
+import { CandleSection } from "../../components/tributes/CandleSection"
+import CandleDialog from "../../components/tributes/CandleDialog"
+import { PhotoGallery } from "../../components/tributes/PhotoGallery"
+import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
 import { supabase } from "../../lib/supabase"
-import type { Tribute, User, Comment, Candle } from "../../types"
+import type { Tribute, User, Comment, Photo } from "../../types"
 
 interface TributeContentProps {
   tribute: Tribute
   user: User | null
 }
 
-export function TributeContent({ tribute: initialTribute, user }: TributeContentProps) {
+export function TributeContent({ tribute, user }: TributeContentProps) {
+  const [comments, setComments] = useState<Comment[]>(tribute.comments || [])
+  const [candles, setCandles] = useState(tribute.candles || [])
+  const [photos, setPhotos] = useState<Photo[]>(tribute.photos || [])
   const [showCandleDialog, setShowCandleDialog] = useState(false)
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [currentTribute, setCurrentTribute] = useState<Tribute>(initialTribute)
+  const [isOwner, setIsOwner] = useState(false)
   const router = useRouter()
+  const commentsSectionRef = useRef<HTMLDivElement>(null)
 
-  const isOwner = user?.id === currentTribute.created_by
+  useEffect(() => {
+    setIsOwner(user?.id === tribute.created_by)
+  }, [user, tribute.created_by])
 
-  const handleDelete = async () => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este homenaje?")) {
+  const handleAddComment = (newComment: Comment) => {
+    setComments((prevComments) => [...prevComments, newComment])
+  }
+
+  const handleLightCandle = () => {
+    setShowCandleDialog(true)
+  }
+
+  const handleCandleLit = (newCandle: any) => {
+    setCandles((prevCandles) => [...prevCandles, newCandle])
+  }
+
+  const handleScrollToComments = () => {
+    commentsSectionRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("tribute-images")
+        .upload(`${tribute.id}/${file.name}`, file)
+
+      if (uploadError) throw uploadError
+
+      if (uploadData) {
+        const { data } = supabase.storage.from("tribute-images").getPublicUrl(uploadData.path)
+
+        const { data: photoData, error: photoError } = await supabase
+          .from("photos")
+          .insert({
+            tribute_id: tribute.id,
+            url: data.publicUrl,
+            descripcion: "",
+          })
+          .select()
+          .single()
+
+        if (photoError) throw photoError
+
+        setPhotos((prevPhotos) => [...prevPhotos, photoData])
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error)
+      alert("Error al subir la foto")
+    }
+  }
+
+  const handlePhotoDelete = async (id: string) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar esta foto?")) {
       try {
-        const { error } = await supabase.from("tributes").delete().eq("id", currentTribute.id)
+        const { error } = await supabase.from("photos").delete().eq("id", id)
         if (error) throw error
-        toast.success("Homenaje eliminado con éxito")
-        router.push("/perfil")
+        setPhotos((prevPhotos) => prevPhotos.filter((photo) => photo.id !== id))
       } catch (error) {
-        console.error("Error al eliminar el homenaje:", error)
-        toast.error("Error al eliminar el homenaje")
+        console.error("Error deleting photo:", error)
+        alert("Error al eliminar la foto")
       }
     }
   }
 
-  const handleEdit = async (updatedData: Partial<Tribute>) => {
+  const handleUpdateDescription = async (id: string, description: string) => {
     try {
-      const { error } = await supabase.from("tributes").update(updatedData).eq("id", currentTribute.id)
+      const { error } = await supabase.from("photos").update({ descripcion: description }).eq("id", id)
+
       if (error) throw error
-      setCurrentTribute({ ...currentTribute, ...updatedData })
-      toast.success("Homenaje actualizado con éxito")
-      setShowEditForm(false)
+
+      setPhotos((prevPhotos) =>
+        prevPhotos.map((photo) => (photo.id === id ? { ...photo, descripcion: description } : photo)),
+      )
     } catch (error) {
-      console.error("Error al actualizar el homenaje:", error)
-      toast.error("Error al actualizar el homenaje")
+      console.error("Error updating description:", error)
+      alert("Error al actualizar la descripción")
     }
   }
 
-  const handleCommentAdded = (newComment: Comment) => {
-    setCurrentTribute((prevTribute) => ({
-      ...prevTribute,
-      comments: [...(prevTribute.comments || []), newComment],
-    }))
+  const handleEdit = () => {
+    router.push(`/editar-homenaje/${tribute.slug}`)
   }
 
-  const handleCandleLit = (newCandle: Candle) => {
-    setCurrentTribute((prevTribute) => ({
-      ...prevTribute,
-      candles: {
-        count: (prevTribute.candles?.count || 0) + 1,
-      },
-    }))
-    toast.success("Vela encendida con éxito")
-    setShowCandleDialog(false)
-  }
-
-  const handleUpdatePremiumStatus = async (esPremium: boolean) => {
-    try {
-      const { error } = await supabase.from("tributes").update({ es_premium: esPremium }).eq("id", currentTribute.id)
-      if (error) throw error
-      setCurrentTribute({ ...currentTribute, es_premium: esPremium })
-      toast.success(esPremium ? "Homenaje actualizado a premium" : "Homenaje cambiado a estándar")
-    } catch (error) {
-      console.error("Error al actualizar el estado premium:", error)
-      toast.error("Error al actualizar el estado del homenaje")
+  const handleDelete = async () => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este homenaje?")) {
+      try {
+        const { error } = await supabase.from("tributes").delete().eq("id", tribute.id)
+        if (error) throw error
+        alert("Homenaje eliminado con éxito")
+        router.push("/perfil")
+      } catch (error) {
+        console.error("Error al eliminar el homenaje:", error)
+        alert("Error al eliminar el homenaje")
+      }
     }
   }
 
-  const handleBuyCredit = () => {
-    // Implement credit purchase logic here
-    console.log("Buying credit")
-    // You might want to show a payment dialog or redirect to a payment page
-  }
-
-  const scrollToComments = () => {
-    document.getElementById("comentarios")?.scrollIntoView({ behavior: "smooth" })
+  const handleTogglePremium = async () => {
+    // TODO: Implement premium status toggle logic
+    console.log("Toggle premium status")
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="max-w-6xl mx-auto px-4 -mt-32 relative z-10">
-        <div className="elegant-card rounded-lg shadow-lg p-8 mt-20">
-          <TributeHeader
-            tribute={currentTribute}
-            isOwner={isOwner}
-            onEdit={() => setShowEditForm(true)}
-            onDelete={handleDelete}
-            onUpdatePremiumStatus={handleUpdatePremiumStatus}
-            onBuyCredit={handleBuyCredit}
-          />
-
-          <TributeBiography biografia={currentTribute.biografia} />
-
-          <TributeActions
-            onLightCandle={() => setShowCandleDialog(true)}
-            onScrollToComments={scrollToComments}
-            slug={currentTribute.slug}
-            name={currentTribute.nombre}
-          />
-
-          {currentTribute.photos && currentTribute.photos.length > 0 && (
-            <PhotoGallery
-              photos={currentTribute.photos}
-              canEdit={isOwner}
-              onUpload={(file: File) => {
-                // Implement photo upload logic
-                console.log("Uploading file:", file)
-              }}
-              onDelete={(id: string) => {
-                // Implement photo delete logic
-                console.log("Deleting photo with id:", id)
-              }}
-              onUpdateDescription={(id: string, description: string) => {
-                // Implement photo description update logic
-                console.log("Updating description for photo:", id, description)
-              }}
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Tribute Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div className="flex items-center space-x-4">
+          <div className="relative w-24 h-24 rounded-full overflow-hidden">
+            <img
+              src={tribute.imagen_principal || "/placeholder.svg"}
+              alt={tribute.nombre}
+              className="w-full h-full object-cover"
             />
-          )}
-
-          <CandleSection candles={currentTribute.candles} tributeId={currentTribute.id} />
-
-          <CommentSection
-            comments={currentTribute.comments || []}
-            tributeId={currentTribute.id}
-            user={user}
-            onCommentAdded={handleCommentAdded}
+          </div>
+          <div>
+            <h1 className="text-3xl font-andika text-primary mb-2">{tribute.nombre}</h1>
+            <div className="flex items-center gap-4 text-text/60 font-montserrat">
+              <span className="flex items-center">
+                <Calendar className="w-4 h-4 mr-1" />
+                {new Date(tribute.fecha_nacimiento).getFullYear()} -{" "}
+                {new Date(tribute.fecha_fallecimiento).getFullYear()}
+              </span>
+              {tribute.ubicacion && (
+                <span className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {tribute.ubicacion}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <ShareButton
+            tributeSlug={tribute.slug}
+            tributeName={tribute.nombre}
+            className="text-text/60 hover:text-primary"
           />
+          {isOwner && (
+            <>
+              <button onClick={handleEdit} className="text-text/60 hover:text-primary" aria-label="Edit tribute">
+                <Edit className="w-5 h-5" />
+              </button>
+              <button onClick={handleDelete} className="text-red-500 hover:text-red-700" aria-label="Delete tribute">
+                <Trash2 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleTogglePremium}
+                className="text-text/60 hover:text-primary"
+                aria-label="Toggle premium status"
+              >
+                <Star className="w-5 h-5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      <BackgroundMusic tributeId={currentTribute.id} canEdit={isOwner} />
+      {/* Tribute Biography */}
+      <div className="prose max-w-none mb-8">
+        <p className="text-text/80 font-montserrat">{tribute.biografia}</p>
+      </div>
 
-      {showEditForm && <EditTributeForm slug={currentTribute.slug} onClose={() => setShowEditForm(false)} />}
+      {/* Tribute Actions */}
+      <div className="flex flex-wrap gap-4 mb-12">
+        <button
+          onClick={handleLightCandle}
+          className={`elegant-button flex items-center gap-2 px-4 py-2 rounded-md ${
+            !user ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          <Heart className="w-5 h-5" />
+          Encender Vela
+        </button>
+        <button
+          onClick={handleScrollToComments}
+          className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-text rounded-md hover:bg-primary/10"
+        >
+          <MessageCircle className="w-5 h-5" />
+          Dejar Mensaje
+        </button>
+      </div>
 
-      <Toaster />
+      {/* Candle Section */}
+      <CandleSection candles={candles} tributeId={tribute.id} isOwner={isOwner} />
+
+      {/* Photo Gallery */}
+      <PhotoGallery
+        photos={photos}
+        canEdit={isOwner}
+        onUpload={handlePhotoUpload}
+        onDelete={handlePhotoDelete}
+        onUpdateDescription={handleUpdateDescription}
+      />
+
+      {/* Background Music */}
+      <BackgroundMusic tributeId={tribute.id} canEdit={isOwner} />
+
+      {/* Comment Section */}
+      <div ref={commentsSectionRef}>
+        <CommentSection
+          comments={comments}
+          tributeId={tribute.id}
+          onCommentAdded={handleAddComment}
+          user={user}
+          isOwner={isOwner}
+        />
+      </div>
+
+      {showCandleDialog && (
+        <CandleDialog onClose={() => setShowCandleDialog(false)} tributeId={tribute.id} onCandleLit={handleCandleLit} />
+      )}
     </div>
   )
 }

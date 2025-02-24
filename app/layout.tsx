@@ -21,7 +21,7 @@ const montserratAlternates = Montserrat_Alternates({
 export const metadata: Metadata = {
   title: "Portal del Recuerdo",
   description: "Un espacio digital para honrar la memoria de nuestros seres queridos",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -41,6 +41,8 @@ export default function RootLayout({
     </html>
   )
 }
+
+import "./globals.css"
 
 
 

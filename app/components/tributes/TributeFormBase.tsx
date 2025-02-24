@@ -4,6 +4,17 @@ import { useState } from "react"
 import { Camera, Calendar, MapPin, Star } from "lucide-react"
 import type React from "react" // Added import for React
 
+const filterPrimaryColor = "invert(65%) sepia(19%) saturate(434%) hue-rotate(356deg) brightness(92%) contrast(86%)"
+
+// Add this style to your component
+const styleTag = document.createElement("style")
+styleTag.textContent = `
+  .filter-primary {
+    filter: ${filterPrimaryColor};
+  }
+`
+document.head.appendChild(styleTag)
+
 interface TributeFormBaseProps {
   initialData?: {
     nombre: string
@@ -92,7 +103,13 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
               id="fechaNacimiento"
               value={formData.fechaNacimiento}
               onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-              className="elegant-input w-full px-3 py-2 rounded-md font-montserrat"
+              className="elegant-input w-full px-3 py-2 rounded-md font-montserrat text-primary bg-background appearance-none"
+              style={{
+                colorScheme: "dark",
+                WebkitCalendarPickerIndicator: {
+                  filter: "invert(1) hue-rotate(180deg)",
+                },
+              }}
               required
             />
           </div>
@@ -107,7 +124,13 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
               id="fechaFallecimiento"
               value={formData.fechaFallecimiento}
               onChange={(e) => setFormData({ ...formData, fechaFallecimiento: e.target.value })}
-              className="elegant-input w-full px-3 py-2 rounded-md font-montserrat"
+              className="elegant-input w-full px-3 py-2 rounded-md font-montserrat text-primary bg-background appearance-none"
+              style={{
+                colorScheme: "dark",
+                WebkitCalendarPickerIndicator: {
+                  filter: "invert(1) hue-rotate(180deg)",
+                },
+              }}
               required
               max={new Date().toISOString().split("T")[0]}
             />

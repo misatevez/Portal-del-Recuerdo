@@ -36,6 +36,7 @@ export default function TributeData({ params }: { params: { slug: string } }) {
             candles(
               id,
               mensaje,
+              created_at,
               profiles(nombre)
             ),
             photos(
@@ -50,7 +51,13 @@ export default function TributeData({ params }: { params: { slug: string } }) {
         if (error) throw error
         if (!data) throw new Error("Homenaje no encontrado")
 
-        setTribute(data)
+        // Asegurarse de que las velas estén en el formato correcto
+        const formattedTribute = {
+          ...data,
+          candles: data.candles || [], // Asegurarse de que candles sea un array
+        }
+
+        setTribute(formattedTribute)
       } catch (err) {
         setError(err as Error)
         console.error("Error fetching tribute:", err)
@@ -73,3 +80,4 @@ export default function TributeData({ params }: { params: { slug: string } }) {
 
   return <TributeContent tribute={tribute} user={session?.user || null} />
 }
+

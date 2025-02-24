@@ -25,7 +25,9 @@ export default function ProfileData() {
     })
 
     // Suscribirse a cambios en la autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         router.push("/login")
         return
@@ -128,3 +130,4 @@ export default function ProfileData() {
     />
   )
 }
+

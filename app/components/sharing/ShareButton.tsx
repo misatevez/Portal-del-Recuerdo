@@ -6,27 +6,33 @@ import type { ShareButtonProps } from "../../types"
 
 export function ShareButton({ tributeSlug, tributeName, className }: ShareButtonProps) {
   const [showShareDialog, setShowShareDialog] = useState(false)
+  const [shareUrl, setShareUrl] = useState("")
 
-  const shareUrl = `${window.location.origin}/homenaje/${tributeSlug}`
+  // Move URL generation to a useEffect to ensure it only runs client-side
+  const handleShare = () => {
+    setShareUrl(`${window.location.origin}/homenaje/${tributeSlug}`)
+    setShowShareDialog(true)
+  }
 
   const shareOptions = [
     {
       name: "Facebook",
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      getUrl: () => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
     },
     {
       name: "Twitter",
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Homenaje a ${tributeName}`)}`,
+      getUrl: () =>
+        `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`Homenaje a ${tributeName}`)}`,
     },
     {
       name: "WhatsApp",
-      url: `https://wa.me/?text=${encodeURIComponent(`Homenaje a ${tributeName}: ${shareUrl}`)}`,
+      getUrl: () => `https://wa.me/?text=${encodeURIComponent(`Homenaje a ${tributeName}: ${shareUrl}`)}`,
     },
   ]
 
   return (
     <>
-      <button onClick={() => setShowShareDialog(true)} className={className}>
+      <button onClick={handleShare} className={className}>
         <Share2 className="w-5 h-5" />
       </button>
 
@@ -43,7 +49,7 @@ export function ShareButton({ tributeSlug, tributeName, className }: ShareButton
               {shareOptions.map((option) => (
                 <a
                   key={option.name}
-                  href={option.url}
+                  href={option.getUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center elegant-button px-4 py-2 rounded-md font-andika"

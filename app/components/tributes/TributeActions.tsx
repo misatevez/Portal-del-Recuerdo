@@ -1,3 +1,7 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Heart, MessageCircle } from "lucide-react"
 import { ShareButton } from "../sharing/ShareButton"
 import { useAuth } from "../../auth/AuthProvider"
@@ -5,22 +9,42 @@ import type { TributeActionsProps } from "../../types"
 
 export function TributeActions({ onLightCandle, onScrollToComments, slug, name }: TributeActionsProps) {
   const { user } = useAuth()
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  const handleLightCandle = async () => {
+    console.log("Botón Encender Vela clickeado")
+    console.log("Estado del usuario:", user)
+
+    if (!user) {
+      console.log("Usuario no autenticado, redirigiendo a login")
+      router.push("/login")
+      return
+    }
+
+    try {
+      setLoading(true)
+      console.log("Llamando a onLightCandle")
+      await onLightCandle()
+      console.log("onLightCandle ejecutado exitosamente")
+    } catch (error) {
+      console.error("Error al encender la vela:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="flex flex-wrap gap-4 mb-12">
       <button
-        onClick={onLightCandle}
-        disabled={!user}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-          user ? "bg-primary text-background hover:bg-primary/80" : "bg-gray-400 text-gray-600 cursor-not-allowed"
-        } relative group`}
+        onClick={handleLightCandle}
+        disabled={loading}
+        className={`elegant-button flex items-center gap-2 px-4 py-2 rounded-md ${
+          !user ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
         <Heart className="w-5 h-5" />
-        Encender Vela
-        {!user && (
-          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            {user === null ? "Por favor, inicia sesión para encender una vela." : "Cargando estado de usuario..."}
-          </span>
-        )}
+        {loading ? "Encendiendo..." : "Encender Vela"}
       </button>
       <button
         onClick={onScrollToComments}

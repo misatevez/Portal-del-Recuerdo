@@ -6,6 +6,7 @@ import { useState } from "react"
 import { X } from "lucide-react"
 import { supabase } from "../../lib/supabase"
 import { useAuth } from "../../auth/AuthProvider"
+import toast from "react-hot-toast"
 
 interface CandleDialogProps {
   onClose: () => void
@@ -13,7 +14,8 @@ interface CandleDialogProps {
   onCandleLit: (newCandle: any) => void
 }
 
-export function CandleDialog({ onClose, tributeId, onCandleLit }: CandleDialogProps) {
+// Changed from 'function CandleDialog' to 'export default function CandleDialog'
+export default function CandleDialog({ onClose, tributeId, onCandleLit }: CandleDialogProps) {
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { user } = useAuth()
@@ -30,6 +32,7 @@ export function CandleDialog({ onClose, tributeId, onCandleLit }: CandleDialogPr
           tribute_id: tributeId,
           user_id: user.id,
           mensaje: message.trim() || null,
+          estado: "pendiente", // Establecer estado inicial como pendiente
         })
         .select("*, profiles:user_id(nombre)")
         .single()
@@ -38,9 +41,10 @@ export function CandleDialog({ onClose, tributeId, onCandleLit }: CandleDialogPr
 
       onCandleLit(data)
       onClose()
+      toast.success("Tu vela ha sido enviada y está pendiente de aprobación")
     } catch (error) {
       console.error("Error al encender la vela:", error)
-      alert("Error al encender la vela. Por favor, inténtalo de nuevo.")
+      toast.error("Error al encender la vela. Por favor, inténtalo de nuevo.")
     } finally {
       setIsSubmitting(false)
     }

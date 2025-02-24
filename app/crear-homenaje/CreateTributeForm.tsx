@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "../auth/AuthProvider"
-import { supabase, updateUserCredits, createTribute } from "../lib/supabase"
+import { supabase } from "../lib/supabase"
 import { TributeFormBase } from "../components/tributes/TributeFormBase"
 import { slugify } from "../utils/slugify"
 import { PaymentDialog } from "../components/payments/PaymentDialog"
@@ -27,10 +27,10 @@ async function generateUniqueSlug(name: string, birthDate: string, deathDate: st
 
 export function CreateTributeForm() {
   const [loading, setLoading] = useState(false)
-  const [userCredits, setUserCredits] = useState(0)
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   const router = useRouter()
   const { user } = useAuth()
+  const [userCredits, setUserCredits] = useState(0)
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
 
   const handleSubmit = async (formData: any) => {
     if (!user) {
@@ -73,17 +73,16 @@ export function CreateTributeForm() {
         imagen_principal: imagenUrl,
         created_by: user.id,
         slug: slug,
-        es_premium: formData.esPremium,
-        estado: formData.esPremium ? "publicado" : "borrador",
       }
 
-      const createdTribute = await createTribute(newTribute)
+      const { data, error } = await supabase.from("tributes").insert(newTribute).select()
 
-      if (formData.esPremium && createdTribute.length > 0) {
-        await updateUserCredits(user.id, createdTribute[0].id, 1)
+      if (error) {
+        console.error("Error al insertar en la base de datos:", error)
+        throw error
       }
 
-      console.log("Homenaje creado exitosamente:", createdTribute)
+      console.log("Homenaje creado exitosamente:", data)
       alert("Homenaje creado con éxito")
       router.push(`/homenaje/${slug}`)
     } catch (error) {
@@ -94,9 +93,19 @@ export function CreateTributeForm() {
     }
   }
 
+  if (!user) {
+    return null // The parent component will handle the redirect
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-andika text-primary mb-8 text-center">Crear Nuevo Homenaje</h1>
+      <TributeFormBase
+        onSubmit={handleSubmit}
+        buttonText="Crear Homenaje"
+        userCredits={userCredits}
+        onBuyCredit={() => setShowPaymentDialog(true)}
+      />
       {showPaymentDialog && (
         <PaymentDialog
           planId="premium"
@@ -108,18 +117,10 @@ export function CreateTributeForm() {
             setShowPaymentDialog(false)
           }}
           onError={() => {
-            // Handle payment error
             console.error("Error en el pago")
-            // You can add more error handling logic here, such as showing an error message to the user
           }}
         />
       )}
-      <TributeFormBase
-        onSubmit={handleSubmit}
-        buttonText="Crear Homenaje"
-        userCredits={userCredits}
-        onBuyCredit={() => setShowPaymentDialog(true)}
-      />
     </div>
   )
 }

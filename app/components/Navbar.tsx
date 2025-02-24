@@ -9,8 +9,8 @@ import { supabase } from "../lib/supabase"
 
 export default function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false)
-  const { user, signOut } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
+  const { user, signOut } = useAuth()
   const navLinkClass = "text-text hover:text-primary transition-colors font-andika"
 
   useEffect(() => {
@@ -22,7 +22,6 @@ export default function Navbar() {
 
       try {
         const { data } = await supabase.from("moderators").select("role").eq("id", user.id).maybeSingle()
-
         setIsAdmin(data?.role === "admin")
       } catch (err) {
         console.error("Error checking admin status:", err)
@@ -36,8 +35,11 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await signOut()
+      setMenuAbierto(false) // Close mobile menu after logout
     } catch (error) {
-      console.error("Error al cerrar sesión:", error)
+      console.error("Error during logout:", error)
+      // Show error to user but don't throw
+      alert("Error al cerrar sesión. Por favor, intenta de nuevo.")
     }
   }
 

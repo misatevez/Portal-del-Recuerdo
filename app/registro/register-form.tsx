@@ -38,14 +38,12 @@ export function RegisterForm() {
 
       if (authData.user) {
         // 2. Crear perfil
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              nombre: nombre,
-            }
-          ])
+        const { error: profileError } = await supabase.from("profiles").insert([
+          {
+            id: authData.user.id,
+            nombre: nombre,
+          },
+        ])
 
         if (profileError) throw profileError
       }
@@ -58,7 +56,7 @@ export function RegisterForm() {
           ? "El usuario ya está registrado"
           : err.message === "Invalid email or password"
             ? "Correo electrónico o contraseña inválidos"
-            : "Error al registrar usuario. Por favor, inténtalo de nuevo."
+            : "Error al registrar usuario. Por favor, inténtalo de nuevo.",
       )
     } finally {
       setLoading(false)
@@ -157,19 +155,15 @@ export function RegisterForm() {
               required
             />
             <label htmlFor="terminos" className="ml-2 block text-sm text-text/80 font-montserrat">
-              Declaro haber leído y aceptar los{" "} terminos y condiciones
-              
+              Declaro haber leído y aceptar los terminos y condiciones
             </label>
-           
           </div>
 
           <div className="flex items-center justify-center">
-            
-          <Link href="/terminos" target="_blank" className="hover:text-primary/80 underline">
-                Leer los terminos y condiciones
-              </Link>
-            </div>
-        
+            <Link href="/terminos" target="_blank" className="hover:text-primary/80 underline">
+              Leer los terminos y condiciones
+            </Link>
+          </div>
 
           {!aceptaTerminos && (
             <p className="mt-2 text-sm text-red-500 font-montserrat">
@@ -222,3 +216,4 @@ export function RegisterForm() {
     </div>
   )
 }
+
