@@ -158,7 +158,7 @@ export function RegisterForm() {
             />
             <label htmlFor="terminos" className="ml-2 block text-sm text-text/80 font-montserrat">
               Acepto los{" "}
-              <Link href="/terminos" className="text-primary hover:text-primary/80">
+              <Link href="/terminos" target="_blank" className="text-primary hover:text-primary/80">
                 términos y condiciones
               </Link>
             </label>
