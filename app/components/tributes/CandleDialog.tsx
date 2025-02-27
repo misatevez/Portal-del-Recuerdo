@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { X } from "lucide-react"
+import { X, Heart } from "lucide-react"
 import { supabase } from "../../lib/supabase"
 import { useAuth } from "../../auth/AuthProvider"
 import toast from "react-hot-toast"
@@ -39,9 +39,15 @@ export default function CandleDialog({ onClose, tributeId, onCandleLit }: Candle
 
       if (error) throw error
 
+      // Pasar la vela recién creada al componente padre
       onCandleLit(data)
       onClose()
-      toast.success("Tu vela ha sido enviada y está pendiente de aprobación")
+      
+      // Mostrar notificación de éxito
+      toast.success("Tu vela ha sido encendida y está pendiente de aprobación", {
+        duration: 5000,
+        icon: '🕯️',
+      })
     } catch (error) {
       console.error("Error al encender la vela:", error)
       toast.error("Error al encender la vela. Por favor, inténtalo de nuevo.")
@@ -59,6 +65,17 @@ export default function CandleDialog({ onClose, tributeId, onCandleLit }: Candle
             <X className="w-5 h-5" />
           </button>
         </div>
+        
+        <div className="flex justify-center mb-6">
+          <div className="p-4 bg-primary/10 rounded-full">
+            <Heart className="w-12 h-12 text-primary" />
+          </div>
+        </div>
+        
+        <p className="text-text/80 font-montserrat mb-4 text-center">
+          Enciende una vela en memoria de este ser querido. Tu vela aparecerá una vez sea aprobada.
+        </p>
+        
         <form onSubmit={handleSubmit}>
           <textarea
             value={message}

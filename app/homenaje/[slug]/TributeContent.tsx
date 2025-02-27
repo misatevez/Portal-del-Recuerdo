@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Heart, MessageCircle, Edit, Trash2, Star, Calendar, MapPin } from "lucide-react"
+import { Heart, MessageCircle, Edit, Trash2, Star, Calendar, MapPin, Info } from "lucide-react"
 import { ShareButton } from "../../components/sharing/ShareButton"
 import { CommentSection } from "../../components/tributes/CommentSection"
 import { CandleSection } from "../../components/tributes/CandleSection"
@@ -10,6 +10,7 @@ import CandleDialog from "../../components/tributes/CandleDialog"
 import { PhotoGallery } from "../../components/tributes/PhotoGallery"
 import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
 import { supabase } from "../../lib/supabase"
+import toast from "react-hot-toast"
 import type { Tribute, User, Comment, Photo } from "../../types"
 
 interface TributeContentProps {
@@ -20,9 +21,11 @@ interface TributeContentProps {
 export function TributeContent({ tribute, user }: TributeContentProps) {
   const [comments, setComments] = useState<Comment[]>(tribute.comments || [])
   const [candles, setCandles] = useState(tribute.candles || [])
+  const [pendingCandles, setPendingCandles] = useState<any[]>([])
   const [photos, setPhotos] = useState<Photo[]>(tribute.photos || [])
   const [showCandleDialog, setShowCandleDialog] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
+  const [isPremium, setIsPremium] = useState(tribute.is_premium || false)
   const router = useRouter()
   const commentsSectionRef = useRef<HTMLDivElement>(null)
 
@@ -30,16 +33,111 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
     setIsOwner(user?.id === tribute.created_by)
   }, [user, tribute.created_by])
 
+  // Cargar velas pendientes cuando el usuario es propietario
+  useEffect(() => {
+    if (isOwner && user) {
+      const loadPendingCandles = async () => {
+        try {
+          console.log("Cargando velas pendientes para el homenaje:", tribute.id);
+          
+          // Consulta explícita para velas pendientes
+          const { data, error } = await supabase
+            .from("candles")
+            .select("*, profiles:user_id(nombre)")
+            .eq("tribute_id", tribute.id)
+            .eq("estado", "pendiente");
+            
+          if (error) throw error;
+          
+          console.log("Velas pendientes encontradas:", data?.length || 0);
+          console.log("Datos de velas pendientes:", data);
+          
+          if (data && data.length > 0) {
+            // Actualizar directamente el estado de candles con las velas pendientes
+            setCandles(prevCandles => {
+              // Crear un mapa de IDs existentes para evitar duplicados
+              const existingIds = new Set(prevCandles.map(c => c.id));
+              // Filtrar solo las velas nuevas
+              const newCandles = data.filter(c => !existingIds.has(c.id));
+              console.log("Nuevas velas a agregar:", newCandles.length);
+              
+              // Asegurarse de que el estado de las velas es correcto
+              const updatedCandles = [...prevCandles];
+              for (const newCandle of newCandles) {
+                // Asegurarse de que el estado está correctamente establecido
+                newCandle.estado = "pendiente";
+                updatedCandles.push(newCandle);
+              }
+              
+              return updatedCandles;
+            });
+          }
+        } catch (error) {
+          console.error("Error al cargar velas pendientes:", error);
+        }
+      };
+      
+      loadPendingCandles();
+    }
+  }, [isOwner, user, tribute.id]);
+
+  // Modificar el useEffect que carga las velas pendientes
+  useEffect(() => {
+    // Cargar todas las velas del homenaje, no solo las pendientes
+    const loadCandles = async () => {
+      try {
+        console.log("Cargando velas para el homenaje:", tribute.id);
+        
+        const { data, error } = await supabase
+          .from("candles")
+          .select("*, profiles:user_id(nombre)")
+          .eq("tribute_id", tribute.id);
+            
+        if (error) throw error;
+        
+        console.log("Velas encontradas:", data?.length || 0);
+        console.log("Datos de velas:", data);
+        
+        if (data && data.length > 0) {
+          // Reemplazar completamente el estado de velas con los datos actualizados
+          setCandles(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar velas:", error);
+      }
+    };
+    
+    loadCandles();
+  }, [tribute.id]); // Solo depende del ID del homenaje, no del usuario o isOwner
+
   const handleAddComment = (newComment: Comment) => {
     setComments((prevComments) => [...prevComments, newComment])
   }
 
   const handleLightCandle = () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para encender una vela", {
+        duration: 3000,
+      })
+      router.push("/login")
+      return
+    }
     setShowCandleDialog(true)
   }
 
   const handleCandleLit = (newCandle: any) => {
-    setCandles((prevCandles) => [...prevCandles, newCandle])
+    // Agregar la vela a la lista de velas pendientes
+    setPendingCandles((prev) => [...prev, newCandle])
+    
+    // Si el usuario es el propietario del homenaje, también agregar a las velas
+    if (isOwner) {
+      setCandles((prevCandles) => {
+        // Verificar si la vela ya existe en el estado para evitar duplicados
+        const exists = prevCandles.some(c => c.id === newCandle.id)
+        if (exists) return prevCandles
+        return [...prevCandles, newCandle]
+      })
+    }
   }
 
   const handleScrollToComments = () => {
@@ -48,6 +146,15 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
   const handlePhotoUpload = async (file: File) => {
     try {
+      // Verificar si el homenaje es premium o si ya ha alcanzado el límite de fotos gratuitas
+      if (!isPremium && photos.length >= 3) {
+        toast.error(
+          "Has alcanzado el límite de fotos para homenajes gratuitos. Actualiza a premium para subir más fotos.",
+          { duration: 5000 }
+        )
+        return
+      }
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("tribute-images")
         .upload(`${tribute.id}/${file.name}`, file)
@@ -70,10 +177,11 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         if (photoError) throw photoError
 
         setPhotos((prevPhotos) => [...prevPhotos, photoData])
+        toast.success("Foto subida correctamente")
       }
     } catch (error) {
       console.error("Error uploading photo:", error)
-      alert("Error al subir la foto")
+      toast.error("Error al subir la foto")
     }
   }
 
@@ -83,9 +191,10 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         const { error } = await supabase.from("photos").delete().eq("id", id)
         if (error) throw error
         setPhotos((prevPhotos) => prevPhotos.filter((photo) => photo.id !== id))
+        toast.success("Foto eliminada correctamente")
       } catch (error) {
         console.error("Error deleting photo:", error)
-        alert("Error al eliminar la foto")
+        toast.error("Error al eliminar la foto")
       }
     }
   }
@@ -99,9 +208,10 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       setPhotos((prevPhotos) =>
         prevPhotos.map((photo) => (photo.id === id ? { ...photo, descripcion: description } : photo)),
       )
+      toast.success("Descripción actualizada correctamente")
     } catch (error) {
       console.error("Error updating description:", error)
-      alert("Error al actualizar la descripción")
+      toast.error("Error al actualizar la descripción")
     }
   }
 
@@ -114,11 +224,11 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       try {
         const { error } = await supabase.from("tributes").delete().eq("id", tribute.id)
         if (error) throw error
-        alert("Homenaje eliminado con éxito")
+        toast.success("Homenaje eliminado con éxito")
         router.push("/perfil")
       } catch (error) {
         console.error("Error al eliminar el homenaje:", error)
-        alert("Error al eliminar el homenaje")
+        toast.error("Error al eliminar el homenaje")
       }
     }
   }
@@ -192,9 +302,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       <div className="flex flex-wrap gap-4 mb-12">
         <button
           onClick={handleLightCandle}
-          className={`elegant-button flex items-center gap-2 px-4 py-2 rounded-md ${
-            !user ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className="elegant-button flex items-center gap-2 px-4 py-2 rounded-md"
         >
           <Heart className="w-5 h-5" />
           Encender Vela
@@ -209,7 +317,13 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       </div>
 
       {/* Candle Section */}
-      <CandleSection candles={candles} tributeId={tribute.id} isOwner={isOwner} />
+      <CandleSection 
+        candles={candles} 
+        pendingCandles={pendingCandles}
+        tributeId={tribute.id} 
+        isOwner={isOwner} 
+        currentUser={user}
+      />
 
       {/* Photo Gallery */}
       <PhotoGallery
@@ -218,10 +332,30 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         onUpload={handlePhotoUpload}
         onDelete={handlePhotoDelete}
         onUpdateDescription={handleUpdateDescription}
+        isPremium={isPremium}
+        photoLimit={isPremium ? null : 0} // Límite de 3 fotos para homenajes gratuitos, sin límite para premium
       />
 
-      {/* Background Music */}
-      <BackgroundMusic tributeId={tribute.id} canEdit={isOwner} />
+      {/* Background Music - solo mostrar si es premium */}
+      {isPremium ? (
+        <BackgroundMusic tributeId={tribute.id} canEdit={isOwner} />
+      ) : (
+        isOwner && (
+          <section className="mb-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-andika text-primary">Música de Fondo</h2>
+            </div>
+            <div className="p-4 bg-primary/10 rounded-md">
+              <p className="font-montserrat text-sm flex items-center">
+                <Info className="w-5 h-5 mr-2 text-primary" />
+                La música de fondo es una característica exclusiva para homenajes premium. 
+                Actualiza tu homenaje a premium para añadir música de fondo.
+              </p>
+
+            </div>
+          </section>
+        )
+      )}
 
       {/* Comment Section */}
       <div ref={commentsSectionRef}>
