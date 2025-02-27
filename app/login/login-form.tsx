@@ -11,7 +11,7 @@ import { supabase } from "../lib/supabase"
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [error, setError] = useState<React.ReactNode | string>("")
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const router = useRouter()
@@ -30,7 +30,15 @@ export function LoginForm() {
       if (error) {
         // Verificar si el error es porque el email no está verificado
         if (error.message.includes("Email not confirmed")) {
-          setError("Tu correo electrónico aún no ha sido verificado. Por favor, revisa tu bandeja de entrada y confirma tu cuenta.")
+          setError(
+            <span>
+              Tu correo electrónico aún no ha sido verificado. Por favor, revisa tu bandeja de entrada y confirma tu cuenta. 
+              Si no lo encuentras, puedes reenviar el correo de verificación{" "}
+              <Link href="/registro/reenviar" className="text-primary underline">
+                aquí
+              </Link>
+            </span>
+          )
           return
         }
         throw error
@@ -173,4 +181,3 @@ export function LoginForm() {
     </div>
   )
 }
-
