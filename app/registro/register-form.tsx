@@ -161,7 +161,7 @@ export function RegisterForm() {
           </div>
 
           <div className="flex items-center justify-center">
-            <Link href="/terminos" target="_blank" className="hover:text-primary/80 underline">
+            <Link href="/terminos-y-condiciones" target="_blank" className="hover:text-primary/80 underline">
               Leer los terminos y condiciones
             </Link>
           </div>

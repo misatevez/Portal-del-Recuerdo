@@ -133,7 +133,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       {/* Tribute Header */}
       <div className="flex justify-between items-start mb-8">
         <div className="flex items-center space-x-4">
-          <div className="relative w-24 h-24 rounded-full overflow-hidden">
+          <div className="relative w-[300px] h-[300px] rounded-full overflow-hidden">
             <img
               src={tribute.imagen_principal || "/placeholder.svg"}
               alt={tribute.nombre}
