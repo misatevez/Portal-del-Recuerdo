@@ -22,12 +22,19 @@ export function LoginForm() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        // Verificar si el error es porque el email no está verificado
+        if (error.message.includes("Email not confirmed")) {
+          setError("Tu correo electrónico aún no ha sido verificado. Por favor, revisa tu bandeja de entrada y confirma tu cuenta.")
+          return
+        }
+        throw error
+      }
 
       // Redirect to profile page on success
       router.push("/perfil")

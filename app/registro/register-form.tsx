@@ -31,6 +31,7 @@ export function RegisterForm() {
           data: {
             nombre,
           },
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       })
 
@@ -46,10 +47,10 @@ export function RegisterForm() {
         ])
 
         if (profileError) throw profileError
+        
+        // 3. Redirigir a la página de confirmación en lugar de al perfil
+        router.push("/registro/confirmacion")
       }
-
-      // 3. Redirigir al perfil
-      router.push("/perfil")
     } catch (err: any) {
       setError(
         err.message === "User already registered"
