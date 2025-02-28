@@ -146,30 +146,27 @@ export function LoginForm() {
         </div>
 
         <div className="mt-6">
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-primary/20"></div>
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-2 py-1 bg-surface text-text/60 font-montserrat text-sm">O continúa con</span>
-            </div>
-          </div>
+      <div className="flex items-center justify-center">
+        <div className="flex-grow border-t border-primary/20"></div>
+        <span className="mx-4 text-text/60 font-montserrat text-sm">O continúa con</span>
+        <div className="flex-grow border-t border-primary/20"></div>
+      </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
-            >
-              Facebook
-            </button>
-          </div>
-        </div>
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
+        >
+          Google
+        </button>
+        <button
+          type="button"
+          className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
+        >
+          Facebook
+        </button>
+      </div>
+    </div>
       </form>
 
       <p className="mt-8 text-center text-sm text-text/60 font-montserrat">
