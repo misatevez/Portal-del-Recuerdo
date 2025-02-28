@@ -321,11 +321,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <ShareButton
-            tributeSlug={tribute.slug}
-            tributeName={tribute.nombre}
-            className="text-text/60 hover:text-primary"
-          />
+
           {isOwner && (
             <>
               <button onClick={handleEdit} className="text-text/60 hover:text-primary" aria-label="Edit tribute">

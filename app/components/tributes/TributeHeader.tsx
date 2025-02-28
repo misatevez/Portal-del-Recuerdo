@@ -38,11 +38,7 @@ export function TributeHeader({
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <ShareButton
-          tributeSlug={tribute.slug}
-          tributeName={tribute.nombre}
-          className="text-text/60 hover:text-primary"
-        />
+
         {isOwner && (
           <>
             <button onClick={onEdit} className="text-text/60 hover:text-primary" aria-label="Edit tribute">

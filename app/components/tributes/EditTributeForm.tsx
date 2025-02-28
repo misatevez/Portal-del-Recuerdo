@@ -5,6 +5,7 @@ import { TributeFormBase } from "./TributeFormBase"
 import { supabase } from "../../lib/supabase"
 import type { Tribute } from "../../types"
 import { useRouter } from "next/navigation"
+import { toast } from "react-hot-toast"
 
 interface EditTributeFormProps {
   slug: string
@@ -44,36 +45,56 @@ export function EditTributeForm({ slug, onClose }: EditTributeFormProps) {
         fecha_fallecimiento: formData.fechaFallecimiento,
         ubicacion: formData.ubicacion,
         biografia: formData.biografia,
-        es_premium: formData.isPremium,
+        is_premium: formData.isPremium,
       }
 
+      // Comprobar si se ha seleccionado una nueva imagen
       if (formData.imagenPrincipal instanceof File) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("tribute-images")
-          .upload(`${tribute.id}/${formData.imagenPrincipal.name}`, formData.imagenPrincipal)
+        // Usar el bucket "storage" y la carpeta "tribute_images"
+        const bucketName = "storage";
+        
+        const fileExt = formData.imagenPrincipal.name.split('.').pop();
+        const fileName = `${tribute.id}_${Date.now()}.${fileExt}`;
+        const filePath = `tribute_images/${tribute.id}/${fileName}`;
+        
+        console.log("Intentando subir imagen a bucket:", bucketName, "ruta:", filePath);
+        
+        try {
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, formData.imagenPrincipal, {
+              cacheControl: '3600',
+              upsert: true
+            });
 
-        if (uploadError) throw uploadError
-
-        if (uploadData) {
-          const { data } = supabase.storage.from("tribute-images").getPublicUrl(uploadData.path)
-          updatedData.imagen_principal = data.publicUrl
+          if (uploadError) {
+            console.error("Error al subir la imagen:", uploadError);
+            toast.warning("No se pudo actualizar la imagen, pero se guardarán los demás cambios");
+          } else if (uploadData) {
+            const { data } = supabase.storage.from(bucketName).getPublicUrl(uploadData.path);
+            console.log("Imagen subida correctamente:", data.publicUrl);
+            updatedData.imagen_principal = data.publicUrl;
+          }
+        } catch (uploadErr) {
+          console.error("Error al subir la imagen:", uploadErr);
+          toast.warning("No se pudo actualizar la imagen, pero se guardarán los demás cambios");
         }
       }
 
-      const { error } = await supabase.from("tributes").update(updatedData).eq("id", tribute.id)
+      // Actualizar el homenaje en la base de datos
+      const { error } = await supabase.from("tributes").update(updatedData).eq("id", tribute.id);
 
-      if (error) throw error
+      if (error) throw error;
 
-      alert("Homenaje actualizado con éxito")
+      toast.success("Homenaje actualizado con éxito");
       if (onClose) {
-        onClose()
+        onClose();
       } else {
-        // Si no hay onClose, redirigir al usuario
-        router.push(`/homenaje/${slug}`)
+        router.push(`/homenaje/${slug}`);
       }
     } catch (error) {
-      console.error("Error updating tribute:", error)
-      alert("Error al actualizar el homenaje. Por favor, inténtalo de nuevo.")
+      console.error("Error updating tribute:", error);
+      toast.error("Error al actualizar el homenaje. Por favor, inténtalo de nuevo.");
     }
   }
 
@@ -98,6 +119,7 @@ export function EditTributeForm({ slug, onClose }: EditTributeFormProps) {
           imagenPrincipal: null,
           isPremium: tribute.es_premium,
         }}
+        currentImageUrl={tribute.imagen_principal || ""}
         onSubmit={handleSubmit}
         buttonText="Guardar Cambios"
         userCredits={userCredits}

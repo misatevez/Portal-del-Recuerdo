@@ -25,24 +25,41 @@ interface TributeFormBaseProps {
     imagenPrincipal: File | null
     isPremium?: boolean
   }
+  currentImageUrl?: string
   onSubmit: (formData: any) => Promise<void>
   buttonText: string
   userCredits: number
   onBuyCredit: () => void
 }
 
-export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits, onBuyCredit }: TributeFormBaseProps) {
+export function TributeFormBase({
+  initialData = {
+    nombre: "",
+    fechaNacimiento: "",
+    fechaFallecimiento: "",
+    ubicacion: "",
+    biografia: "",
+    imagenPrincipal: null,
+    isPremium: false,
+  },
+  currentImageUrl = "",
+  onSubmit,
+  buttonText,
+  userCredits,
+  onBuyCredit,
+}: TributeFormBaseProps) {
   const [formData, setFormData] = useState({
-    nombre: initialData?.nombre || "",
-    fechaNacimiento: initialData?.fechaNacimiento || "",
-    fechaFallecimiento: initialData?.fechaFallecimiento || "",
-    ubicacion: initialData?.ubicacion || "",
-    biografia: initialData?.biografia || "",
-    imagenPrincipal: initialData?.imagenPrincipal || null,
-    isPremium: initialData?.isPremium || false,
+    nombre: initialData.nombre,
+    fechaNacimiento: initialData.fechaNacimiento,
+    fechaFallecimiento: initialData.fechaFallecimiento,
+    ubicacion: initialData.ubicacion,
+    biografia: initialData.biografia,
+    imagenPrincipal: initialData.imagenPrincipal,
+    isPremium: initialData.isPremium || false,
   })
-  const [characterCount, setCharacterCount] = useState(500 - (initialData?.biografia?.length || 0))
+  const [characterCount, setCharacterCount] = useState(500 - (initialData.biografia?.length || 0))
   const [loading, setLoading] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string>(currentImageUrl)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,6 +71,19 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
       alert("Error al procesar el formulario. Por favor, inténtalo de nuevo.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setFormData({ ...formData, imagenPrincipal: file })
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -164,16 +194,23 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
           Imagen Principal
         </h2>
 
+        {imagePreview && (
+          <div className="mb-4">
+            <img 
+              src={imagePreview} 
+              alt="Vista previa" 
+              className="w-40 h-40 object-cover rounded-lg border border-primary/20"
+            />
+          </div>
+        )}
+
         <div className="mt-2">
           <label className="block">
             <span className="sr-only">Seleccionar imagen</span>
             <input
               type="file"
-              accept=".jpg, .jpeg, .webp, .png, .gif"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null
-                setFormData({ ...formData, imagenPrincipal: file })
-              }}
+              accept="image/*"
+              onChange={handleImageChange}
               className="block w-full text-sm text-text/60 font-montserrat
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-full file:border-0
@@ -183,14 +220,9 @@ export function TributeFormBase({ initialData, onSubmit, buttonText, userCredits
             />
           </label>
           <p className="mt-2 text-sm text-text/60 font-montserrat">
-            Formatos aceptados: JPG, WEBP, PNG, GIF. Tamaño máximo: 5MB.
+            Selecciona una imagen para representar a tu ser querido.
           </p>
         </div>
-        {formData.imagenPrincipal && (
-          <p className="mt-2 text-sm text-text/60 font-montserrat">
-            Imagen seleccionada: {formData.imagenPrincipal.name}
-          </p>
-        )}
       </div>
 
       {/* Opción Premium */}

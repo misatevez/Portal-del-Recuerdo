@@ -8,6 +8,8 @@ import { User, Settings, Grid, Clock, Loader, Heart, Mail, Calendar } from "luci
 import { TributeCard } from "../components/TributeCard"
 import { supabase, updateTributePremiumStatus } from "../lib/supabase"
 import type { ProfileContentProps, Tribute } from "../types"
+import { toast } from "react-hot-toast"
+import { ConfirmDialog } from "../components/ui/ConfirmDialog"
 
 export function ProfileContent({
   user,
@@ -23,6 +25,8 @@ export function ProfileContent({
   const [tributes, setTributes] = useState<Tribute[]>(initialTributes)
   const [activity, setActivity] = useState(initialActivity)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [tributeToDelete, setTributeToDelete] = useState<string | null>(null)
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,17 +64,25 @@ export function ProfileContent({
     router.push(`/editar-homenaje/${tributeSlug}`)
   }
 
-  const handleDelete = async (tributeId: string) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este homenaje?")) {
-      try {
-        const { error } = await supabase.from("tributes").delete().eq("id", tributeId)
-        if (error) throw error
-        setTributes(tributes.filter((tribute) => tribute.id !== tributeId))
-        alert("Homenaje eliminado con éxito")
-      } catch (error) {
-        console.error("Error al eliminar el homenaje:", error)
-        alert("Error al eliminar el homenaje")
-      }
+  const handleDelete = (tributeId: string) => {
+    setTributeToDelete(tributeId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteTribute = async () => {
+    if (!tributeToDelete) return
+    
+    try {
+      const { error } = await supabase.from("tributes").delete().eq("id", tributeToDelete)
+      if (error) throw error
+      
+      setTributes(tributes.filter((tribute) => tribute.id !== tributeToDelete))
+      toast.success("Homenaje eliminado con éxito")
+    } catch (error) {
+      console.error("Error al eliminar el homenaje:", error)
+      toast.error("Error al eliminar el homenaje")
+    } finally {
+      setTributeToDelete(null)
     }
   }
 
@@ -322,6 +334,17 @@ export function ProfileContent({
             )}
           </>
         )}
+
+        {/* Diálogo de confirmación para eliminar homenajes */}
+        <ConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDeleteTribute}
+          title="Eliminar homenaje"
+          message="¿Estás seguro de que quieres eliminar este homenaje? Esta acción no se puede deshacer y se perderán todos los datos asociados."
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+        />
       </div>
     </div>
   )
