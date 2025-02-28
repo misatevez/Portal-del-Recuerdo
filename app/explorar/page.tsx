@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Search, Filter, ChevronLeft, ChevronRight } from "lucide-react"
 import { TributeCard } from "../components/TributeCard"
 import { useSearchTributes } from "../hooks/useSearchTributes"
+import { supabase } from "../lib/supabase"
+import { toast } from "react-hot-toast"
 
 const ITEMS_PER_PAGE = 12
 
@@ -16,6 +18,59 @@ export default function ExplorePage() {
     sortBy: "recent" as "recent" | "candles" | "name",
   })
   const [currentPage, setCurrentPage] = useState(0)
+  
+  // Estados para las opciones de filtros dinámicos
+  const [availableYears, setAvailableYears] = useState<string[]>([])
+  const [availableLocations, setAvailableLocations] = useState<string[]>([])
+  const [loadingFilters, setLoadingFilters] = useState(true)
+
+  // Cargar años y ubicaciones disponibles desde la base de datos
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      setLoadingFilters(true)
+      try {
+        // Cargar años únicos de fallecimiento
+        const { data: yearsData, error: yearsError } = await supabase
+          .from('tributes')
+          .select('fecha_fallecimiento')
+          .not('fecha_fallecimiento', 'is', null)
+        
+        if (yearsError) throw yearsError
+        
+        // Extraer años únicos de las fechas
+        const years = yearsData
+          .map(tribute => new Date(tribute.fecha_fallecimiento).getFullYear().toString())
+          .filter((year, index, self) => self.indexOf(year) === index)
+          .sort((a, b) => parseInt(b) - parseInt(a)) // Ordenar de más reciente a más antiguo
+        
+        setAvailableYears(years)
+        
+        // Cargar ubicaciones únicas
+        const { data: locationsData, error: locationsError } = await supabase
+          .from('tributes')
+          .select('ubicacion')
+          .not('ubicacion', 'is', null)
+        
+        if (locationsError) throw locationsError
+        
+        // Extraer ubicaciones únicas
+        const locations = locationsData
+          .map(tribute => tribute.ubicacion)
+          .filter(Boolean) // Eliminar valores nulos o vacíos
+          .filter((location, index, self) => self.indexOf(location) === index)
+          .sort() // Ordenar alfabéticamente
+        
+        setAvailableLocations(locations)
+      } catch (error) {
+        console.error("Error al cargar opciones de filtros:", error)
+        toast.error("No se pudieron cargar todas las opciones de filtros")
+      } finally {
+        setLoadingFilters(false)
+      }
+    }
+    
+    loadFilterOptions()
+  }, [])
 
   // Debounce para la búsqueda
   const [debouncedBusqueda, setDebouncedBusqueda] = useState(busqueda)
@@ -27,16 +82,12 @@ export default function ExplorePage() {
   // Reset página cuando cambian los filtros o la búsqueda
   useEffect(() => {
     setCurrentPage(0)
-  }, [filtros, busqueda]) // Updated dependency array
+  }, [filtros, busqueda])
 
   const { tributes, totalPages, loading } = useSearchTributes(debouncedBusqueda, filtros, {
     page: currentPage,
     pageSize: ITEMS_PER_PAGE,
   })
-
-  const años = Array.from({ length: new Date().getFullYear() - 2020 + 1 }, (_, i) =>
-    (new Date().getFullYear() - i).toString(),
-  )
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-20">
@@ -83,13 +134,18 @@ export default function ExplorePage() {
                   value={filtros.year}
                   onChange={(e) => setFiltros({ ...filtros, year: e.target.value })}
                   className="elegant-input w-full px-3 py-2 rounded-md font-montserrat"
+                  disabled={loadingFilters}
                 >
                   <option value="">Todos</option>
-                  {años.map((año) => (
-                    <option key={año} value={año}>
-                      {año}
-                    </option>
-                  ))}
+                  {loadingFilters ? (
+                    <option value="" disabled>Cargando...</option>
+                  ) : (
+                    availableYears.map((año) => (
+                      <option key={año} value={año}>
+                        {año}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -99,11 +155,18 @@ export default function ExplorePage() {
                   value={filtros.location}
                   onChange={(e) => setFiltros({ ...filtros, location: e.target.value })}
                   className="elegant-input w-full px-3 py-2 rounded-md font-montserrat"
+                  disabled={loadingFilters}
                 >
                   <option value="">Todas</option>
-                  <option value="madrid">Madrid</option>
-                  <option value="barcelona">Barcelona</option>
-                  <option value="valencia">Valencia</option>
+                  {loadingFilters ? (
+                    <option value="" disabled>Cargando...</option>
+                  ) : (
+                    availableLocations.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -120,7 +183,6 @@ export default function ExplorePage() {
                   className="elegant-input w-full px-3 py-2 rounded-md font-montserrat"
                 >
                   <option value="recent">Más reciente</option>
-                  <option value="candles">Más velas</option>
                   <option value="name">Nombre</option>
                 </select>
               </div>
