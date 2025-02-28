@@ -74,7 +74,7 @@ export function PhotoGallery({
       </div>
 
       {/* Mostrar información sobre el límite de fotos */}
-      {!isPremium && photoLimit !== null && (
+      {  !isPremium && photoLimit !== null && (
         <div className="mb-4 p-3 bg-primary/10 rounded-md">
           <p className="font-montserrat text-sm flex items-center">
             <Info className="w-4 h-4 mr-2 text-primary" />

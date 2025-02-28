@@ -110,8 +110,56 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
     loadCandles();
   }, [tribute.id]); // Solo depende del ID del homenaje, no del usuario o isOwner
 
-  const handleAddComment = (newComment: Comment) => {
-    setComments((prevComments) => [...prevComments, newComment])
+  // Añadir un nuevo useEffect para cargar todos los comentarios
+  useEffect(() => {
+    // Cargar todos los comentarios del homenaje
+    const loadComments = async () => {
+      try {
+        console.log("Cargando comentarios para el homenaje:", tribute.id);
+        
+        const { data, error } = await supabase
+          .from("comments")
+          .select("*, profiles:user_id(nombre)")
+          .eq("tribute_id", tribute.id);
+            
+        if (error) throw error;
+        
+        console.log("Comentarios encontrados:", data?.length || 0);
+        
+        if (data && data.length > 0) {
+          // Reemplazar completamente el estado de comentarios con los datos actualizados
+          setComments(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar comentarios:", error);
+      }
+    };
+    
+    loadComments();
+  }, [tribute.id]); // Solo depende del ID del homenaje
+
+  const handleAddComment = (newComment: any) => {
+    // Comprobar si es una acción de eliminación
+    if (newComment.action === "delete") {
+      setComments(prevComments => prevComments.filter(c => c.id !== newComment.id))
+      return
+    }
+    
+    // Comportamiento normal para añadir/actualizar comentarios
+    setComments(prevComments => {
+      // Verificar si el comentario ya existe
+      const exists = prevComments.some(c => c.id === newComment.id)
+      
+      if (exists) {
+        // Si existe, actualizar su estado
+        return prevComments.map(c => 
+          c.id === newComment.id ? newComment : c
+        )
+      } else {
+        // Si no existe, añadirlo
+        return [...prevComments, newComment]
+      }
+    })
   }
 
   const handleLightCandle = () => {
@@ -238,6 +286,11 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
     console.log("Toggle premium status")
   }
 
+  // Añadir función para manejar la eliminación de velas
+  const handleCandleDelete = (candleId: string) => {
+    setCandles(prevCandles => prevCandles.filter(candle => candle.id !== candleId))
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Tribute Header */}
@@ -323,9 +376,11 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         tributeId={tribute.id} 
         isOwner={isOwner} 
         currentUser={user}
+        onCandleDeleted={handleCandleDelete}
       />
 
       {/* Photo Gallery */}
+      {isOwner && (
       <PhotoGallery
         photos={photos}
         canEdit={isOwner}
@@ -335,6 +390,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         isPremium={isPremium}
         photoLimit={isPremium ? null : 0} // Límite de 3 fotos para homenajes gratuitos, sin límite para premium
       />
+      )}
 
       {/* Background Music - solo mostrar si es premium */}
       {isPremium ? (

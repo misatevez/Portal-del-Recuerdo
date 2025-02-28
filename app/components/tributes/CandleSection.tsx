@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Heart } from "lucide-react"
+import { Heart, X } from "lucide-react"
 import { supabase } from "../../lib/supabase"
 import toast from "react-hot-toast"
+import { ConfirmDialog } from "../ui/ConfirmDialog"
 
 interface CandleSectionProps {
   candles: any[]
@@ -10,12 +11,15 @@ interface CandleSectionProps {
   tributeId: string
   isOwner: boolean
   currentUser: any
+  onCandleDeleted?: (candleId: string) => void
 }
 
-export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner, currentUser }: CandleSectionProps) {
+export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner, currentUser, onCandleDeleted }: CandleSectionProps) {
   const [approving, setApproving] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<string | null>(null)
   const [localCandles, setLocalCandles] = useState(candles)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [candleToDelete, setCandleToDelete] = useState<string | null>(null)
 
   // Actualizar el estado local cuando cambian las props
   useEffect(() => {
@@ -121,6 +125,43 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
     return isPending;
   });
 
+  // Añadir función para manejar la eliminación de velas
+  const handleDeleteCandle = (candleId: string) => {
+    // Abrir el diálogo de confirmación y guardar el ID de la vela
+    setCandleToDelete(candleId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  // Añadir función para confirmar la eliminación
+  const confirmDeleteCandle = async () => {
+    if (!candleToDelete) return
+    
+    try {
+      const { error } = await supabase
+        .from("candles")
+        .delete()
+        .eq("id", candleToDelete)
+
+      if (error) throw error
+
+      // Actualizar el estado local
+      setLocalCandles(prev => prev.filter(candle => candle.id !== candleToDelete))
+      
+      // Notificar al componente padre
+      // Esto requiere añadir una prop onCandleDeleted al componente
+      if (onCandleDeleted) {
+        onCandleDeleted(candleToDelete)
+      }
+
+      toast.success("Vela eliminada correctamente")
+    } catch (error) {
+      console.error("Error al eliminar la vela:", error)
+      toast.error("Error al eliminar la vela")
+    } finally {
+      setCandleToDelete(null)
+    }
+  }
+
   return (
     <section className="mb-12">
       <h2 className="text-2xl font-andika text-primary mb-6">Velas Encendidas</h2>
@@ -201,7 +242,18 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
       {approvedCandles.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
           {approvedCandles.map((candle) => (
-            <div key={candle.id} className="bg-surface p-4 rounded-lg text-center">
+            <div key={candle.id} className="bg-surface p-4 rounded-lg text-center relative">
+              {/* Botón de eliminar para el propietario */}
+              {isOwner && (
+                <button
+                  onClick={() => handleDeleteCandle(candle.id)}
+                  className="absolute top-2 right-2 p-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-500 rounded-full"
+                  title="Eliminar vela"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              
               <div className="flex justify-center mb-2">
                 <Heart className="w-8 h-8 text-primary" />
               </div>
@@ -243,6 +295,17 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
           </div>
         </div>
       )}
+
+      {/* Diálogo de confirmación para eliminar velas */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteCandle}
+        title="Eliminar vela"
+        message="¿Estás seguro de que quieres eliminar esta vela? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+      />
     </section>
   )
 }
