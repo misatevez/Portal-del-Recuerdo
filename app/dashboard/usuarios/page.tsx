@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "../../lib/supabase"
 import { supabaseAdmin } from "../../lib/supabaseAdmin"
-import { Search, UserPlus, Edit, Trash2, Check, X, Mail } from "lucide-react"
+import { Search, Shield, Trash2, Check, X, Ban, UserCheck } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog"
 
@@ -12,7 +12,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isBanDialogOpen, setIsBanDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
+  const [userToBan, setUserToBan] = useState<{id: string, isBanned: boolean} | null>(null)
   const [activeTable, setActiveTable] = useState<'profiles' | 'usuarios'>('profiles')
   
   useEffect(() => {
@@ -64,24 +66,73 @@ export default function UsersPage() {
     if (!userToDelete) return
     
     try {
-      // Eliminar de la tabla activa
-      const { error } = await supabase
-        .from(activeTable)
-        .delete()
-        .eq('id', userToDelete)
+      // Llamar a nuestra API para eliminar completamente al usuario
+      const response = await fetch('/api/users/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userToDelete }),
+      })
       
-      if (error) throw error
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al eliminar usuario')
+      }
       
       // Actualizar la lista de usuarios
       setUsers(users.filter(user => user.id !== userToDelete))
       
-      toast.success('Usuario eliminado correctamente')
+      toast.success('Usuario eliminado completamente')
     } catch (error) {
       console.error('Error al eliminar usuario:', error)
-      toast.error('No se pudo eliminar el usuario')
+      toast.error('No se pudo eliminar el usuario completamente')
     } finally {
       setIsDeleteDialogOpen(false)
       setUserToDelete(null)
+    }
+  }
+  
+  const handleBanUser = (userId: string, isBanned: boolean) => {
+    setUserToBan({ id: userId, isBanned })
+    setIsBanDialogOpen(true)
+  }
+  
+  const confirmBanUser = async () => {
+    if (!userToBan) return
+    
+    try {
+      // Llamar a nuestra API para banear/desbanear al usuario
+      const response = await fetch('/api/users/ban', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: userToBan.id, 
+          isBanned: userToBan.isBanned 
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al cambiar estado de bloqueo')
+      }
+      
+      // Actualizar la lista de usuarios
+      setUsers(users.map(user => 
+        user.id === userToBan.id ? { ...user, is_banned: !userToBan.isBanned } : user
+      ))
+      
+      toast.success(`Usuario ${userToBan.isBanned ? 'desbloqueado' : 'bloqueado'} correctamente`)
+    } catch (error) {
+      console.error('Error al cambiar estado de bloqueo del usuario:', error)
+      toast.error('No se pudo cambiar el estado de bloqueo del usuario')
+    } finally {
+      setIsBanDialogOpen(false)
+      setUserToBan(null)
     }
   }
   
@@ -103,7 +154,7 @@ export default function UsersPage() {
         
         toast.success(`Usuario ${!isActive ? 'activado' : 'desactivado'} correctamente`)
       } else {
-        toast.info('Esta acción no está disponible para usuarios de la tabla usuarios')
+        toast.error('Esta acción no está disponible para usuarios de la tabla usuarios')
       }
     } catch (error) {
       console.error('Error al cambiar estado del usuario:', error)
@@ -124,12 +175,21 @@ export default function UsersPage() {
     // Para la tabla usuarios, consideramos que todos están activos
     return true;
   }
+  
+  // Función para determinar si un usuario está baneado
+  const isUserBanned = (user: any) => {
+    if (activeTable === 'profiles') {
+      return user.is_banned === true;
+    }
+    // Para la tabla usuarios, consideramos que ninguno está baneado
+    return false;
+  }
 
   return (
     <div>
       <h1 className="text-3xl font-andika text-primary mb-8">Gestión de Usuarios</h1>
       
-      {/* Buscador y botón de añadir */}
+      {/* Buscador */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -137,23 +197,19 @@ export default function UsersPage() {
           </div>
           <input
             type="text"
-            placeholder="Buscar usuarios por nombre o email..."
-            className="elegant-input pl-10 pr-4 py-2 w-full rounded-md font-montserrat"
+            placeholder="Buscar por nombre o email..."
+            className="pl-10 pr-4 py-2 w-full rounded-md border border-primary/20 bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 font-montserrat"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        
-        <button className="elegant-button px-4 py-2 rounded-md font-andika flex items-center">
-          <UserPlus className="h-5 w-5 mr-2" />
-          Añadir Usuario
-        </button>
       </div>
       
       {/* Indicador de tabla activa */}
-      <div className="mb-4">
-        <span className="px-3 py-1 bg-primary/10 rounded-full text-sm font-montserrat text-primary">
-          Mostrando datos de la tabla: {activeTable}
+      <div className="mb-4 flex items-center">
+        <Shield className="h-5 w-5 text-primary mr-2" />
+        <span className="text-sm font-montserrat text-text/80">
+          Mostrando datos de la tabla: <span className="font-semibold text-primary">{activeTable}</span>
         </span>
       </div>
       
@@ -229,48 +285,54 @@ export default function UsersPage() {
                         </span>
                       </td>
                     )}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
-                        isUserActive(user)
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {isUserActive(user) ? 'Activo' : 'Inactivo'}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-montserrat">
+                      <div className="space-y-1">
+                        <div className="text-text/80">
+                          {isUserActive(user) ? 
+                            <span className="text-green-600 font-medium">Activo</span> : 
+                            <span className="text-red-600 font-medium">Inactivo</span>
+                          }
+                        </div>
+                        
+                        {activeTable === 'profiles' && isUserBanned(user) && (
+                          <div className="text-red-600 font-medium">
+                            Bloqueado
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         {activeTable === 'profiles' && (
                           <button 
                             onClick={() => toggleUserStatus(user.id, isUserActive(user))}
-                            className={`p-1.5 rounded-full ${
-                              isUserActive(user)
-                                ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                                : 'bg-green-100 text-green-600 hover:bg-green-200'
-                            }`}
+                            className="elegant-action-button"
                             title={isUserActive(user) ? 'Desactivar usuario' : 'Activar usuario'}
                           >
-                            {isUserActive(user) ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                            {isUserActive(user) ? 
+                              <X className="w-4 h-4 text-red-600" /> : 
+                              <Check className="w-4 h-4 text-green-600" />
+                            }
                           </button>
                         )}
+                        
                         <button 
-                          className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-                          title="Enviar correo"
+                          onClick={() => handleBanUser(user.id, isUserBanned(user))}
+                          className="elegant-action-button"
+                          title={isUserBanned(user) ? 'Desbloquear usuario' : 'Bloquear usuario'}
                         >
-                          <Mail className="w-4 h-4" />
+                          {isUserBanned(user) ? 
+                            <UserCheck className="w-4 h-4 text-green-600" /> : 
+                            <Ban className="w-4 h-4 text-red-600" />
+                          }
                         </button>
-                        <button 
-                          className="p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
-                          title="Editar usuario"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
+
                         <button 
                           onClick={() => handleDeleteUser(user.id)}
-                          className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          className="elegant-action-button"
                           title="Eliminar usuario"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
                       </div>
                     </td>
@@ -288,10 +350,51 @@ export default function UsersPage() {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDeleteUser}
         title="Eliminar usuario"
-        message="¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer y se eliminarán todos los datos asociados."
+        message="¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer y se eliminarán todos los datos asociados, incluyendo su cuenta, perfil, homenajes, comentarios y velas."
         confirmText="Eliminar"
         cancelText="Cancelar"
       />
+      
+      {/* Diálogo de confirmación para bloquear/desbloquear usuario */}
+      <ConfirmDialog
+        isOpen={isBanDialogOpen}
+        onClose={() => setIsBanDialogOpen(false)}
+        onConfirm={confirmBanUser}
+        title={userToBan?.isBanned ? "Desbloquear usuario" : "Bloquear usuario"}
+        message={userToBan?.isBanned 
+          ? "¿Estás seguro de que quieres desbloquear a este usuario? Podrá volver a acceder a la plataforma."
+          : "¿Estás seguro de que quieres bloquear a este usuario? No podrá acceder a la plataforma mientras esté bloqueado."
+        }
+        confirmText={userToBan?.isBanned ? "Desbloquear" : "Bloquear"}
+        cancelText="Cancelar"
+      />
+      
+      <style jsx global>{`
+        .elegant-action-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: rgba(var(--color-surface-rgb), 0.8);
+          border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .elegant-action-button:hover {
+          background-color: rgba(var(--color-surface-rgb), 1);
+          border-color: rgba(var(--color-primary-rgb), 0.4);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
+        }
+        
+        .elegant-action-button:active {
+          transform: translateY(0);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
     </div>
   )
 } 

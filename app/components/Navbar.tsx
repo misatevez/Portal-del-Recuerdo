@@ -74,7 +74,7 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                 )}
-                <NotificationCenter />
+     
                 <Link href="/perfil" className={navLinkClass}>
                   Mi Perfil
                 </Link>
