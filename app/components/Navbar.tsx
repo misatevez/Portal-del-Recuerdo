@@ -70,7 +70,7 @@ export default function Navbar() {
                 </Link>
                 {isAdmin && (
                   <Link href="/dashboard" className={navLinkClass}>
-                    <Shield className="w-4 h-4" />
+                  
                     Dashboard
                   </Link>
                 )}
