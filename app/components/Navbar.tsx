@@ -69,7 +69,7 @@ export default function Navbar() {
                   Crear Homenaje
                 </Link>
                 {isAdmin && (
-                  <Link href="/admin" className={navLinkClass}>
+                  <Link href="/dashboard" className={navLinkClass}>
                     <Shield className="w-4 h-4" />
                     Dashboard
                   </Link>
