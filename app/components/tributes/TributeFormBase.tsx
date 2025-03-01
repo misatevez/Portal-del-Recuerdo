@@ -24,6 +24,7 @@ interface TributeFormBaseProps {
     biografia: string
     imagenPrincipal: File | null
     isPremium?: boolean
+    premiumUntil?: string
   }
   currentImageUrl?: string
   onSubmit: (formData: any) => Promise<void>
@@ -133,14 +134,7 @@ export function TributeFormBase({
               id="fechaNacimiento"
               value={formData.fechaNacimiento}
               onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-              className="elegant-input w-full px-3 py-2 rounded-md font-montserrat text-primary bg-background appearance-none"
-              style={{
-                colorScheme: "dark",
-                WebkitCalendarPickerIndicator: {
-                  filter: "invert(1) hue-rotate(180deg)",
-                },
-              }}
-              required
+              className="dark-calendar-input w-full p-2 rounded-md bg-surface text-text border border-primary/30"
             />
           </div>
 
@@ -154,15 +148,7 @@ export function TributeFormBase({
               id="fechaFallecimiento"
               value={formData.fechaFallecimiento}
               onChange={(e) => setFormData({ ...formData, fechaFallecimiento: e.target.value })}
-              className="elegant-input w-full px-3 py-2 rounded-md font-montserrat text-primary bg-background appearance-none"
-              style={{
-                colorScheme: "dark",
-                WebkitCalendarPickerIndicator: {
-                  filter: "invert(1) hue-rotate(180deg)",
-                },
-              }}
-              required
-              max={new Date().toISOString().split("T")[0]}
+              className="dark-calendar-input w-full p-2 rounded-md bg-surface text-text border border-primary/30"
             />
           </div>
         </div>
@@ -226,41 +212,66 @@ export function TributeFormBase({
       </div>
 
       {/* Opción Premium */}
-      <div className="elegant-card p-6 rounded-lg">
-        <h2 className="text-xl font-andika text-primary mb-6 flex items-center">
-          <Star className="w-5 h-5 mr-2" />
-          Homenaje Premium
-        </h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-text/80 font-montserrat mb-2">
-              Crea un homenaje premium con características adicionales.
-            </p>
-            <p className="text-text/60 font-montserrat">Créditos disponibles: {userCredits}</p>
-          </div>
-          {userCredits > 0 ? (
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isPremium}
-                onChange={(e) => setFormData({ ...formData, isPremium: e.target.checked })}
-                className="sr-only"
-              />
-              <div
-                className={`relative w-10 h-6 transition-colors duration-200 ease-in-out rounded-full ${formData.isPremium ? "bg-primary" : "bg-gray-400"}`}
-              >
-                <div
-                  className={`absolute left-0 w-6 h-6 transition-transform duration-200 ease-in-out transform bg-white rounded-full ${formData.isPremium ? "translate-x-full" : "translate-x-0"}`}
-                />
-              </div>
-              <span className="ml-3 text-sm font-medium text-text/80 font-montserrat">
-                {formData.isPremium ? "Premium" : "Estándar"}
-              </span>
-            </label>
+      <div className="bg-surface p-4 rounded-lg mb-6">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-andika text-primary mb-2 flex items-center">
+            <Star className="w-5 h-5 mr-2" />
+            Homenaje Premium
+          </h3>
+          
+          {initialData.isPremium && initialData.premiumUntil && (
+            <span className="text-sm text-text/60 font-montserrat">
+              Premium hasta: {new Date(initialData.premiumUntil).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+        
+        <div>
+          <p className="text-text/80 font-montserrat mb-2">
+            Crea un homenaje premium con características adicionales.
+          </p>
+          
+          {initialData.isPremium ? (
+            <div className="p-3 bg-primary/10 rounded-md">
+              <p className="text-text/80 font-montserrat text-sm">
+                Este homenaje ya es premium. Esta configuración no se puede revertir.
+              </p>
+            </div>
           ) : (
-            <button type="button" onClick={onBuyCredit} className="elegant-button px-4 py-2 rounded-md font-andika">
-              Comprar Crédito
-            </button>
+            <>
+              <p className="text-text/60 font-montserrat">Créditos disponibles: {userCredits}</p>
+              
+              {userCredits > 0 ? (
+                <label className="flex items-center cursor-pointer mt-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.isPremium}
+                    onChange={(e) => setFormData({ ...formData, isPremium: e.target.checked })}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`relative w-10 h-6 transition-colors duration-200 ease-in-out rounded-full ${formData.isPremium ? "bg-primary" : "bg-gray-400"}`}
+                  >
+                    <div
+                      className={`absolute left-0 w-6 h-6 transition-transform duration-200 ease-in-out transform bg-white rounded-full ${formData.isPremium ? "translate-x-full" : "translate-x-0"}`}
+                    />
+                  </div>
+                  <span className="ml-3 text-sm font-medium text-text/80 font-montserrat">
+                    {formData.isPremium ? "Premium" : "Estándar"}
+                  </span>
+                </label>
+              ) : (
+                <div className="mt-2">
+                  <button 
+                    type="button" 
+                    onClick={onBuyCredit} 
+                    className="elegant-button px-4 py-2 rounded-md font-andika"
+                  >
+                    Comprar Crédito
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -285,4 +296,10 @@ export function TributeFormBase({
     </form>
   )
 }
+
+<style jsx global>{`
+  .dark-calendar-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) hue-rotate(180deg);
+  }
+`}</style>
 

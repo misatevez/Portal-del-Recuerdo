@@ -11,7 +11,7 @@ import { PhotoGallery } from "../../components/tributes/PhotoGallery"
 import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
 import { supabase } from "../../lib/supabase"
 import toast from "react-hot-toast"
-import type { Tribute, User, Comment, Photo } from "../../types"
+import type { Tribute, User, Comment, Photo, Candle } from "../../types"
 
 interface TributeContentProps {
   tribute: Tribute
@@ -56,20 +56,11 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
             // Actualizar directamente el estado de candles con las velas pendientes
             setCandles(prevCandles => {
               // Crear un mapa de IDs existentes para evitar duplicados
-              const existingIds = new Set(prevCandles.map(c => c.id));
+              const existingIds = new Set(prevCandles.map((c: Candle) => c.id));
               // Filtrar solo las velas nuevas
-              const newCandles = data.filter(c => !existingIds.has(c.id));
+              const newCandles = data.filter((c: Candle) => !existingIds.has(c.id));
               console.log("Nuevas velas a agregar:", newCandles.length);
-              
-              // Asegurarse de que el estado de las velas es correcto
-              const updatedCandles = [...prevCandles];
-              for (const newCandle of newCandles) {
-                // Asegurarse de que el estado está correctamente establecido
-                newCandle.estado = "pendiente";
-                updatedCandles.push(newCandle);
-              }
-              
-              return updatedCandles;
+              return [...prevCandles, ...newCandles];
             });
           }
         } catch (error) {

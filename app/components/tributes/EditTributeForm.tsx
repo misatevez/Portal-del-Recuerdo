@@ -69,7 +69,7 @@ export function EditTributeForm({ slug, onClose }: EditTributeFormProps) {
 
           if (uploadError) {
             console.error("Error al subir la imagen:", uploadError);
-            toast.warning("No se pudo actualizar la imagen, pero se guardarán los demás cambios");
+            toast.error("No se pudo actualizar la imagen, pero se guardarán los demás cambios");
           } else if (uploadData) {
             const { data } = supabase.storage.from(bucketName).getPublicUrl(uploadData.path);
             console.log("Imagen subida correctamente:", data.publicUrl);
@@ -77,7 +77,7 @@ export function EditTributeForm({ slug, onClose }: EditTributeFormProps) {
           }
         } catch (uploadErr) {
           console.error("Error al subir la imagen:", uploadErr);
-          toast.warning("No se pudo actualizar la imagen, pero se guardarán los demás cambios");
+          toast.error("No se pudo actualizar la imagen, pero se guardarán los demás cambios");
         }
       }
 
