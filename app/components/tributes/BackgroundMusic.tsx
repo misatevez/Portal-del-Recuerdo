@@ -8,13 +8,14 @@ import type { BackgroundMusicProps } from "../../types"
 
 export function BackgroundMusic({ tributeId, canEdit }: BackgroundMusicProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [audioSrc, setAudioSrc] = useState("")
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    // TODO: Fetch audio source from the server based on tributeId
-    setAudioSrc("/path/to/default/music.mp3")
-  }, [])
+    // Load the audio file for the tribute
+    if (audioRef.current) {
+      audioRef.current.src = `/path/to/music/${tributeId}.mp3`
+    }
+  }, [tributeId])
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -37,7 +38,7 @@ export function BackgroundMusic({ tributeId, canEdit }: BackgroundMusicProps) {
 
   return (
     <div className="fixed bottom-4 right-4 bg-surface p-2 rounded-full shadow-lg">
-      <audio ref={audioRef} src={audioSrc} loop />
+      <audio ref={audioRef} />
       <div className="flex items-center space-x-2">
         <button onClick={togglePlay} className="p-2 bg-primary text-background rounded-full">
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}

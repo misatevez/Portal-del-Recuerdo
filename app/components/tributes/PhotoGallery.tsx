@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { Trash2, Edit, Upload, Info } from "lucide-react"
-import type { PhotoGalleryProps } from "../../types"
+import type { PhotoGalleryProps as GalleryProps, Photo } from "../../types"
 import { useState, useRef } from "react"
 import { toast } from "react-hot-toast"
 

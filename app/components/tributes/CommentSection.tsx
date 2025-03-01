@@ -51,6 +51,7 @@ export function CommentSection({ comments, tributeId, onCommentAdded, user, isOw
           user_id: user.id,
           contenido: newComment.trim(),
           estado_check: isOwner ? "aprobado" : "pendiente",
+          profiles: { nombre: user.nombre || user.email?.split('@')[0] || 'Usuario' },
         })
         .select("*, profiles:user_id(nombre)")
         .single()
@@ -107,8 +108,11 @@ export function CommentSection({ comments, tributeId, onCommentAdded, user, isOw
       const updatedComment = updatedComments.find(c => c.id === commentId);
       
       if (updatedComment) {
+        // Asegúrate de que estado_check tenga un valor válido
+        updatedComment.estado_check = updatedComment.estado_check as "pendiente" | "aprobado" | "rechazado"; // Asegúrate de que el valor sea uno de los permitidos
+
         // Notificar al componente padre
-        onCommentAdded(updatedComment);
+        onCommentAdded(updatedComment as Comment);
         
         // Forzar una actualización del componente
         setForceUpdate(prev => prev + 1);
@@ -249,7 +253,7 @@ export function CommentSection({ comments, tributeId, onCommentAdded, user, isOw
                 <p className="text-text/80 mb-4 font-montserrat italic">{comment.contenido}</p>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-text/60 font-montserrat">
-                    <span className="font-semibold">{comment.profiles.nombre}</span>
+                    <span className="font-semibold">{comment.profiles ? comment.profiles.nombre : 'Nombre no disponible'}</span>
                     <span className="mx-2">•</span>
                     <span>{new Date(comment.created_at).toLocaleDateString()}</span>
                   </div>
@@ -301,7 +305,7 @@ export function CommentSection({ comments, tributeId, onCommentAdded, user, isOw
               
               <p className="text-text/80 mb-4 font-montserrat italic">{comment.contenido}</p>
               <div className="flex items-center justify-between text-sm text-text/60 font-montserrat">
-                <span className="font-semibold">{comment.profiles.nombre}</span>
+                <span className="font-semibold">{comment.profiles ? comment.profiles.nombre : 'Nombre no disponible'}</span>
                 <span>{new Date(comment.created_at).toLocaleDateString()}</span>
               </div>
             </div>

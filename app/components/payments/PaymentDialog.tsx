@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { X } from "lucide-react"
 import { updateUserCredits } from "../../lib/supabase"
 import { useAuth } from "../../auth/AuthProvider"
@@ -23,12 +23,14 @@ export function PaymentDialog({ planId, planName, price, onClose, onSuccess, onE
       }
 
       onSuccess()
-      onClose()
     } catch (error) {
       console.error("Error en el pago:", error)
-      onError() // Call onError when there's an error
+      // Asegurarse de que el error tenga un mensaje
+      const errorMessage = (error as Error).message || "Error desconocido"
+      onError(errorMessage)
     } finally {
       setLoading(false)
+      onClose()
     }
   }
 

@@ -54,12 +54,9 @@ export default function RecentTributes() {
               id={tribute.id}
               slug={tribute.slug}
               nombre={tribute.nombre}
-              fechaNacimiento={tribute.fecha_nacimiento}
-              fechaFallecimiento={tribute.fecha_fallecimiento}
-              imagen={
-                tribute.imagen_principal ||
-                "https://images.unsplash.com/photo-1494972308805-463bc619d34e?auto=format&fit=crop&q=80"
-              }
+              fechaNacimiento={tribute.fecha_nacimiento || ""}
+              fechaFallecimiento={tribute.fecha_fallecimiento || ""}
+              imagen={tribute.imagen_url || "/placeholder.svg"}
               isOwner={false}
               onEdit={() => {}}
               onDelete={() => {}}
