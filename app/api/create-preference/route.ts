@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { MercadoPagoConfig, Preference } from 'mercadopago'
+import { Preference } from 'mercadopago'
+import { mercadoPagoClient } from '../../lib/mercadopago'
 
 interface PreferenceItem {
   id: string
@@ -24,44 +25,52 @@ interface PreferenceData {
   external_reference?: string
 }
 
-const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MP_ACCESS_TOKEN! 
-})
+const preference = new Preference(mercadoPagoClient)
 
-const preference = new Preference(client)
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json()
-    const { title, price, quantity = 1 } = body
+    const body = await request.json()
+    const { tributeId, productTitle, price } = body
 
-    const preferenceData: PreferenceData = {
-      items: [
-        {
-          id: `premium_credit_${Date.now()}`,
-          title,
-          unit_price: Number(price),
-          quantity: Number(quantity),
-          currency_id: "ARS",
-          description: "Crédito Premium para Portal del Recuerdo",
-          category_id: "credits"
-        }
-      ],
-      back_urls: {
-        success: `${process.env.NEXT_PUBLIC_SITE_URL}/precios/success`,
-        failure: `${process.env.NEXT_PUBLIC_SITE_URL}/precios/failure`,
-        pending: `${process.env.NEXT_PUBLIC_SITE_URL}/precios/pending`
-      },
-      auto_return: "approved",
-      notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/mercadopago/webhook`,
-      statement_descriptor: "Portal del Recuerdo",
-      external_reference: `credit_purchase_${Date.now()}`
-    }
+    const result = await preference.create({
+      body: {
+        payment_methods: {
+          excluded_payment_methods: [],
+          excluded_payment_types: [
+            {
+              id: "ticket"
+            }
+          ],
+          installments: 1
+        },
+        items: [
+          {
+            id: tributeId,
+            title: productTitle,
+            quantity: 1,
+            unit_price: price,
+            currency_id: 'ARS'
+          }
+        ],
+        back_urls: {
+          success: `${process.env.NEXT_PUBLIC_SITE_URL}/pago/exito`,
+          failure: `${process.env.NEXT_PUBLIC_SITE_URL}/pago/error`,
+          pending: `${process.env.NEXT_PUBLIC_SITE_URL}/pago/pendiente`
+        },
+        auto_return: "approved",
+        notification_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhooks/mercadopago`
+      }
+    })
 
-    const response = await preference.create({ body: preferenceData })
-    return NextResponse.json({ id: response.id })
+    return NextResponse.json({
+      id: result.id,
+      init_point: result.init_point
+    })
   } catch (error) {
-    console.error("Error creating preference:", error)
-    return NextResponse.json({ error: "Error creating preference" }, { status: 500 })
+    console.error("Error al crear preferencia:", error)
+    return NextResponse.json(
+      { error: "Error al crear la preferencia de pago" },
+      { status: 500 }
+    )
   }
 } 

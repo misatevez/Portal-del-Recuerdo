@@ -161,12 +161,28 @@ export function PricingPage() {
                   <span className="text-5xl font-bold text-primary">{plan.precio.toLocaleString()}</span>
                   <span className="text-primary ml-2">{plan.precio > 0 ? "/año" : ""}</span>
                 </div>
-                <button
-                  onClick={() => handleSelectPlan(plan)}
-                  className="elegant-button w-full py-2 px-4 rounded-md text-background"
-                >
-                  {plan.precio === 0 ? "Seleccionar Plan" : "Seleccionar Plan"}
-                </button>
+                {plan.precio === 0 ? (
+                  <button
+                    onClick={() => handleSelectPlan(plan)}
+                    className="elegant-button w-full py-2 px-4 rounded-md text-background"
+                  >
+                    Seleccionar Plan
+                  </button>
+                ) : (
+                  <PaymentDialog
+                    planId={plan.id}
+                    planName={plan.nombre}
+                    price={plan.precio}
+                    onClose={() => setSelectedPlan(null)}
+                    onSuccess={() => {
+                      toast({
+                        description: "¡Pago procesado exitosamente!",
+                        variant: "default",
+                      })
+                      setSelectedPlan(null)
+                    }}
+                  />
+                )}
               </div>
 
               {/* Lista de Características */}
