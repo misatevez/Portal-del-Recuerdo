@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase"
 import { TributeFormBase } from "../components/tributes/TributeFormBase"
 import { slugify } from "../utils/slugify"
 import { PaymentDialog } from "../components/payments/PaymentDialog"
+import { toast } from "react-hot-toast"
 
 async function generateUniqueSlug(name: string, birthDate: string, deathDate: string) {
   const baseSlug = slugify(`${name}-${birthDate}-${deathDate}`)
@@ -104,17 +105,14 @@ export function CreateTributeForm() {
       />
       {showPaymentDialog && (
         <PaymentDialog
-          planId="premium"
+          planId="premium_tribute"
           planName="Homenaje Premium"
           price={12000}
           onClose={() => setShowPaymentDialog(false)}
           onSuccess={() => {
-            setUserCredits((prevCredits) => prevCredits + 1)
+            toast.success("¡Pago procesado exitosamente!")
             setShowPaymentDialog(false)
-          }}
-          onError={() => {
-            console.error("Error en el pago")
-            // You can add more error handling logic here
+            // Aquí puedes agregar cualquier lógica adicional después del pago exitoso
           }}
         />
       )}

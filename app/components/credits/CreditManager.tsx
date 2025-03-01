@@ -114,16 +114,14 @@ export function CreditManager({
 
       {showPaymentDialog && (
         <PaymentDialog
-          planId="premium"
-          planName="Premium"
+          planId="premium_credit"
+          planName="Crédito Premium"
           price={12000}
           onClose={() => setShowPaymentDialog(false)}
           onSuccess={() => {
-            loadCredits()
+            loadCredits() // Recargar los créditos después del pago exitoso
+            toast.success("¡Pago procesado exitosamente!")
             setShowPaymentDialog(false)
-          }}
-          onError={(error) => {
-            toast.error(error || "Error al procesar el pago")
           }}
         />
       )}

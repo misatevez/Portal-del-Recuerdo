@@ -12,9 +12,10 @@ interface PaymentDialogProps {
   price: number
   onClose: () => void
   onSuccess: () => void
+  onError?: () => void
 }
 
-export function PaymentDialog({ planId, planName, price, onClose, onSuccess }: PaymentDialogProps) {
+export function PaymentDialog({ planId, planName, price, onClose, onSuccess, onError }: PaymentDialogProps) {
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
   const router = useRouter()
@@ -47,8 +48,10 @@ export function PaymentDialog({ planId, planName, price, onClose, onSuccess }: P
       }
     } catch (error) {
       console.error("Error creating preference:", error)
-      toast.error("Error al procesar el pago")
+      toast.error("Error al procesar el pago. Por favor, intenta de nuevo.")
       setLoading(false)
+      onClose() // Cerramos el diálogo en caso de error
+      onError?.() // Llamamos a onError si existe
     }
   }
 
@@ -61,7 +64,7 @@ export function PaymentDialog({ planId, planName, price, onClose, onSuccess }: P
       {loading ? (
         <>
           <div className="flex items-center justify-center gap-2">
-            <Loader className="w-5 h-5 animate-spin " />
+            <Loader className="w-5 h-5 animate-spin" />
           </div>
         </>
       ) : (
