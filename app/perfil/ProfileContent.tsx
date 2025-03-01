@@ -10,6 +10,7 @@ import { supabase, updateTributePremiumStatus } from "../lib/supabase"
 import type { ProfileContentProps, Tribute } from "../types"
 import { toast } from "react-hot-toast"
 import { ConfirmDialog } from "../components/ui/ConfirmDialog"
+import { CreditManager } from "../components/credits/CreditManager"
 
 export function ProfileContent({
   user,
@@ -302,16 +303,8 @@ export function ProfileContent({
                     </div>
                   </div>
 
-                  <div className="elegant-card p-6 rounded-lg mt-6">
-                    <h3 className="text-lg font-medium text-primary mb-6 font-andika">Créditos Premium</h3>
-                    <p className="text-text/80 font-montserrat mb-4">Créditos disponibles: {userCredits}</p>
-                    <button
-                      onClick={() => setShowPaymentDialog(true)}
-                      className="elegant-button px-4 py-2 rounded-md font-andika"
-                    >
-                      Comprar Créditos
-                    </button>
-                  </div>
+                  {/* Sección de Créditos */}
+                  {user && <CreditManager userId={user.id} />}
 
                   <div className="flex justify-between pt-6">
                     <button
