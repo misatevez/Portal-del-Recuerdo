@@ -138,7 +138,7 @@ export function CreditManager({ userId, tribute, onCreditApplied }: CreditManage
               {purchasing ? 'Procesando...' : 'Comprar Crédito'}
             </button>
             
-            {tribute && !tribute.es_premium && availableCredits > 0 && (
+            {tribute && !tribute.is_premium && availableCredits > 0 && (
               <button
                 onClick={applyCredit}
                 disabled={applying}
@@ -150,7 +150,7 @@ export function CreditManager({ userId, tribute, onCreditApplied }: CreditManage
             )}
           </div>
           
-          {tribute && tribute.es_premium && (
+          {tribute && tribute.is_premium && (
             <div className="mt-4 p-3 bg-primary/10 rounded-md">
               <p className="text-text/80 font-montserrat text-sm">
                 Este homenaje ya es premium

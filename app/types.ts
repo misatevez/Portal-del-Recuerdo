@@ -23,7 +23,7 @@ export type Tribute = {
   fecha_fallecimiento?: string;
   slug: string;
   user_id: string;
-  es_premium: boolean;
+  is_premium: boolean;
   premium_until?: string;
   created_at: string;
   updated_at: string;

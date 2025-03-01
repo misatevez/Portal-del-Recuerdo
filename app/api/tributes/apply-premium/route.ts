@@ -1,16 +1,29 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../../lib/auth'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
-    // Verificar autenticación
-    const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
+    // Obtener la sesión de Supabase
+    const cookieStore = cookies()
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
+    )
+    
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
-
+    
     const userId = session.user.id
     const { tributeId } = await request.json()
     
@@ -67,24 +80,53 @@ export async function POST(request: Request) {
     const now = new Date()
     const premiumUntil = new Date(now.setFullYear(now.getFullYear() + 1)).toISOString()
     
-    // Iniciar una transacción para actualizar tanto el crédito como el homenaje
-    const { error: transactionError } = await supabaseAdmin.rpc('apply_premium_credit', {
-      p_credit_id: creditToUse.id,
-      p_tribute_id: tributeId,
-      p_premium_until: premiumUntil
-    })
-    
-    if (transactionError) {
-      console.error('Error en la transacción:', transactionError)
+    // Si no existe la función RPC, hacemos las actualizaciones manualmente
+    try {
+      // Iniciar una transacción para actualizar tanto el crédito como el homenaje
+      // Primero intentamos usar la función RPC si existe
+      const { error: rpcError } = await supabaseAdmin.rpc('apply_premium_credit', {
+        p_credit_id: creditToUse.id,
+        p_tribute_id: tributeId,
+        p_premium_until: premiumUntil
+      })
+      
+      // Si hay un error con la RPC (probablemente porque no existe), hacemos las actualizaciones manualmente
+      if (rpcError) {
+        console.log('La función RPC no existe, realizando actualizaciones manualmente')
+        
+        // Actualizar el crédito como usado
+        const { error: creditError } = await supabaseAdmin
+          .from('user_credits')
+          .update({
+            used_at: new Date().toISOString(),
+            tribute_id: tributeId
+          })
+          .eq('id', creditToUse.id)
+        
+        if (creditError) throw creditError
+        
+        // Actualizar el homenaje como premium
+        const { error: tributeError } = await supabaseAdmin
+          .from('tributes')
+          .update({
+            is_premium: true,
+            premium_until: premiumUntil
+          })
+          .eq('id', tributeId)
+        
+        if (tributeError) throw tributeError
+      }
+      
+      return NextResponse.json({ 
+        success: true, 
+        premiumUntil: premiumUntil
+      })
+    } catch (error) {
+      console.error('Error al aplicar el crédito premium:', error)
       return NextResponse.json({ 
         error: 'Error al aplicar el crédito premium' 
       }, { status: 500 })
     }
-    
-    return NextResponse.json({ 
-      success: true, 
-      premiumUntil: premiumUntil
-    })
   } catch (error) {
     console.error('Error al procesar la solicitud:', error)
     return NextResponse.json({ error: 'Error al procesar la solicitud' }, { status: 500 })
