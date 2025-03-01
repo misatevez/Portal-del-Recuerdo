@@ -1,7 +1,9 @@
+import React from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { Edit, Trash2, Star } from "lucide-react"
 
+// Definir el tipo localmente
 interface TributeCardProps {
   id: string
   slug: string
@@ -9,9 +11,9 @@ interface TributeCardProps {
   fechaNacimiento: string
   fechaFallecimiento: string
   imagen: string
-  isOwner: boolean
-  onEdit: (slug: string) => void
-  onDelete: () => void
+  isOwner?: boolean
+  onEdit?: () => void
+  onDelete?: () => void
   onTogglePremium: () => void
 }
 
@@ -42,7 +44,7 @@ export function TributeCard({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  onEdit(slug)
+                  onEdit && onEdit()
                 }}
                 className="p-1 bg-primary text-background rounded-full"
               >
@@ -52,7 +54,7 @@ export function TributeCard({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  onDelete()
+                  onDelete && onDelete()
                 }}
                 className="p-1 bg-red-500 text-background rounded-full"
               >

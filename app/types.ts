@@ -1,7 +1,12 @@
+// Importar el tipo User de Supabase
+import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { ReactNode } from 'react'
+
 // Tipos para las tablas principales
-export type User = {
-  id: string;
-  email: string;
+export type User = SupabaseUser
+
+// O extender el tipo User de Supabase si necesitas campos adicionales
+export type ExtendedUser = SupabaseUser & {
   role?: string;
   is_banned?: boolean;
 }
@@ -69,9 +74,33 @@ export type UserCredit = {
 
 // Tipos para props de componentes
 export interface ProfileContentProps {
-  user: {
-    id: string;
-    email: string;
-  };
+  user: User;
   profile: Profile;
+}
+
+// Tipo para CTAButton
+export interface CTAButtonProps {
+  href: string;
+  className?: string;
+  children: ReactNode;
+}
+
+// Tipo para TributeCard
+export interface TributeCardProps {
+  id: string;
+  slug: string;
+  nombre: string;
+  fechaNacimiento: string;
+  fechaFallecimiento: string;
+  imagen: string;
+  isOwner?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}
+
+// Tipo para FeatureCard
+export interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
 } 

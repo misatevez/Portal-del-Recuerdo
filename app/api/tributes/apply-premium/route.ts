@@ -2,21 +2,35 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+// Marcar como dinámica
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
   try {
     // Obtener la sesión de Supabase
     const cookieStore = cookies()
+    
+    // Crear cliente Supabase
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
       {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-        },
+        auth: {
+          persistSession: false
+        }
       }
     )
+    
+    // Establecer la cookie manualmente
+    const supabaseToken = cookieStore.get('sb-access-token')?.value
+    const supabaseRefreshToken = cookieStore.get('sb-refresh-token')?.value
+    
+    if (supabaseToken && supabaseRefreshToken) {
+      await supabase.auth.setSession({
+        access_token: supabaseToken,
+        refresh_token: supabaseRefreshToken
+      })
+    }
     
     const { data: { session } } = await supabase.auth.getSession()
     

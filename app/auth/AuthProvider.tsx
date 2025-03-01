@@ -13,41 +13,52 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   setUserCredits: (credits: number) => void
+  loading: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType>({
+  session: null,
+  user: null,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  setUserCredits: () => {},
+  loading: true,
+})
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [userCredits, setUserCredits] = useState<number>(0) // Added userCredits state
+  const [userCredits, setUserCredits] = useState<number>(0)
   const router = useRouter()
 
   useEffect(() => {
-    const setData = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession()
-      if (error) {
-        console.error("Error getting session:", error)
-        setUser(null)
-      } else {
-        setSession(session)
-        setUser(session?.user ?? null)
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          setSession(null)
+          setUser(null)
+        } else {
+          setSession(session)
+          setUser(session.user)
+        }
+        setLoading(false)
+      } catch (error) {
+        console.error("Error al obtener la sesión:", error)
+        setLoading(false)
       }
-      setLoading(false)
     }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-    })
+    getSession()
 
-    setData()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session)
+        setUser(session?.user || null)
+      }
+    )
 
     return () => {
       subscription.unsubscribe()
@@ -70,19 +81,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signOut()
         if (error) throw error
 
-        // Clear user and session state
         setUser(null)
         setSession(null)
 
-        // Navigate after state is cleared
         router.push("/")
         router.refresh()
       } catch (error) {
         console.error("Signout error:", error)
-        throw error // Rethrow to be handled by the component
+        throw error
       }
     },
     setUserCredits,
+    loading,
   }
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>

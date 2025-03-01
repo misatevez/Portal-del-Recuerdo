@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Marcar esta ruta como dinámica para evitar la pre-renderización estática
+export const dynamic = 'force-dynamic'
+
 // Esta ruta debe estar protegida con algún tipo de autenticación para cron jobs
 export async function GET(request: Request) {
   try {
     // Verificar clave secreta para el cron job
-    const { searchParams } = new URL(request.url)
-    const apiKey = searchParams.get('api_key')
+    const url = new URL(request.url)
+    const apiKey = url.searchParams.get('api_key')
     
     if (apiKey !== process.env.CRON_API_KEY) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })

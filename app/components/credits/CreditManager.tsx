@@ -19,10 +19,14 @@ export function CreditManager({ userId, tribute, onCreditApplied }: CreditManage
   const [purchasing, setPurchasing] = useState(false)
 
   useEffect(() => {
-    loadCredits()
+    if (userId) {
+      loadCredits()
+    }
   }, [userId])
 
   const loadCredits = async () => {
+    if (!userId) return
+    
     try {
       setLoading(true)
       const { data, error } = await supabase

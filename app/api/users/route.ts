@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Marcar como dinámica
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   // Crear cliente Supabase con service role key (seguro en el servidor)
   const supabaseAdmin = createClient(
@@ -9,10 +12,8 @@ export async function GET() {
   )
   
   try {
-    // Obtener usuarios de auth.users
-    const { data: authUsers, error: authError } = await supabaseAdmin
-      .from('auth.users')
-      .select('id, email')
+    // Obtener usuarios de auth.users usando la API de autenticación
+    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers()
     
     if (authError) throw authError
     
@@ -26,7 +27,7 @@ export async function GET() {
     
     // Combinar datos
     const emailMap = new Map()
-    authUsers?.forEach(user => {
+    authUsers?.users?.forEach(user => {
       emailMap.set(user.id, user.email)
     })
     

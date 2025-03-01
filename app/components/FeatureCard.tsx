@@ -1,10 +1,17 @@
-import type { FeatureCardProps } from "../types"
+import React from "react"
+
+// Definir el tipo localmente
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
 
 export default function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
-    <div className="elegant-card p-8 rounded-lg text-center">
-      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">{icon}</div>
-      <h3 className="text-xl font-andika text-primary mb-4">{title}</h3>
+    <div className="bg-card p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+      <div className="text-primary text-3xl mb-4">{icon}</div>
+      <h3 className="text-xl font-andika text-primary mb-2">{title}</h3>
       <p className="text-text/80 font-montserrat">{description}</p>
     </div>
   )
