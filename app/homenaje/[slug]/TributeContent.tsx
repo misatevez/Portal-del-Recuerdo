@@ -374,15 +374,15 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       />
 
       {/* Photo Gallery */}
-      {isOwner && (
-      <PhotoGallery
-        photos={localPhotos}
-        canEdit={isOwner}
-        onUpload={handlePhotoUpload}
-        onDelete={handlePhotoDelete}
-        isPremium={isPremium}
-        photoLimit={isPremium ? null : 0} // 0 para homenajes gratuitos, sin límite para premium
-      />
+      {(isOwner || isPremium) && (
+        <PhotoGallery
+          photos={localPhotos}
+          canEdit={isOwner}
+          onUpload={handlePhotoUpload}
+          onDelete={handlePhotoDelete}
+          isPremium={isPremium}
+          photoLimit={isPremium ? null : 0}
+        />
       )}
 
       {/* Background Music - solo mostrar si es premium */}
