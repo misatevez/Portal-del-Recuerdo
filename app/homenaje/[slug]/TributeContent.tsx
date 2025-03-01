@@ -16,13 +16,16 @@ import type { Tribute, User, Comment, Photo, Candle } from "../../types"
 interface TributeContentProps {
   tribute: Tribute
   user: User | null
+  candles: Candle[]
+  photos: Photo[]
+  comments: Comment[]
 }
 
 export function TributeContent({ tribute, user }: TributeContentProps) {
-  const [comments, setComments] = useState<Comment[]>(tribute.comments || [])
-  const [candles, setCandles] = useState(tribute.candles || [])
+  const [localComments, setLocalComments] = useState<Comment[]>(tribute.comments || [])
+  const [localCandles, setLocalCandles] = useState(tribute.candles || [])
   const [pendingCandles, setPendingCandles] = useState<any[]>([])
-  const [photos, setPhotos] = useState<Photo[]>(tribute.photos || [])
+  const [localPhotos, setLocalPhotos] = useState<Photo[]>(tribute.photos || [])
   const [showCandleDialog, setShowCandleDialog] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
   const [isPremium, setIsPremium] = useState(tribute.is_premium || false)
@@ -54,7 +57,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
           
           if (data && data.length > 0) {
             // Actualizar directamente el estado de candles con las velas pendientes
-            setCandles(prevCandles => {
+            setLocalCandles(prevCandles => {
               // Crear un mapa de IDs existentes para evitar duplicados
               const existingIds = new Set(prevCandles.map((c: Candle) => c.id));
               // Filtrar solo las velas nuevas
@@ -91,7 +94,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         
         if (data && data.length > 0) {
           // Reemplazar completamente el estado de velas con los datos actualizados
-          setCandles(data);
+          setLocalCandles(data);
         }
       } catch (error) {
         console.error("Error al cargar velas:", error);
@@ -119,7 +122,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         
         if (data && data.length > 0) {
           // Reemplazar completamente el estado de comentarios con los datos actualizados
-          setComments(data);
+          setLocalComments(data);
         }
       } catch (error) {
         console.error("Error al cargar comentarios:", error);
@@ -132,12 +135,12 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
   const handleAddComment = (newComment: any) => {
     // Comprobar si es una acción de eliminación
     if (newComment.action === "delete") {
-      setComments(prevComments => prevComments.filter(c => c.id !== newComment.id))
+      setLocalComments(prevComments => prevComments.filter(c => c.id !== newComment.id))
       return
     }
     
     // Comportamiento normal para añadir/actualizar comentarios
-    setComments(prevComments => {
+    setLocalComments(prevComments => {
       // Verificar si el comentario ya existe
       const exists = prevComments.some(c => c.id === newComment.id)
       
@@ -170,7 +173,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
     
     // Si el usuario es el propietario del homenaje, también agregar a las velas
     if (isOwner) {
-      setCandles((prevCandles) => {
+      setLocalCandles((prevCandles) => {
         // Verificar si la vela ya existe en el estado para evitar duplicados
         const exists = prevCandles.some(c => c.id === newCandle.id)
         if (exists) return prevCandles
@@ -186,7 +189,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
   const handlePhotoUpload = async (file: File) => {
     try {
       // Verificar si el homenaje es premium o si ya ha alcanzado el límite de fotos gratuitas
-      if (!isPremium && photos.length >= 3) {
+      if (!isPremium && localPhotos.length >= 3) {
         toast.error(
           "Has alcanzado el límite de fotos para homenajes gratuitos. Actualiza a premium para subir más fotos.",
           { duration: 5000 }
@@ -215,7 +218,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
         if (photoError) throw photoError
 
-        setPhotos((prevPhotos) => [...prevPhotos, photoData])
+        setLocalPhotos((prevPhotos) => [...prevPhotos, photoData])
         toast.success("Foto subida correctamente")
       }
     } catch (error) {
@@ -229,7 +232,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       try {
         const { error } = await supabase.from("photos").delete().eq("id", id)
         if (error) throw error
-        setPhotos((prevPhotos) => prevPhotos.filter((photo) => photo.id !== id))
+        setLocalPhotos((prevPhotos) => prevPhotos.filter((photo) => photo.id !== id))
         toast.success("Foto eliminada correctamente")
       } catch (error) {
         console.error("Error deleting photo:", error)
@@ -244,7 +247,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
       if (error) throw error
 
-      setPhotos((prevPhotos) =>
+      setLocalPhotos((prevPhotos) =>
         prevPhotos.map((photo) => (photo.id === id ? { ...photo, descripcion: description } : photo)),
       )
       toast.success("Descripción actualizada correctamente")
@@ -279,7 +282,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
   // Añadir función para manejar la eliminación de velas
   const handleCandleDelete = (candleId: string) => {
-    setCandles(prevCandles => prevCandles.filter(candle => candle.id !== candleId))
+    setLocalCandles(prevCandles => prevCandles.filter(candle => candle.id !== candleId))
   }
 
   return (
@@ -358,7 +361,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
       {/* Candle Section */}
       <CandleSection 
-        candles={candles} 
+        candles={localCandles} 
         pendingCandles={pendingCandles}
         tributeId={tribute.id} 
         isOwner={isOwner} 
@@ -369,7 +372,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       {/* Photo Gallery */}
       {isOwner && (
       <PhotoGallery
-        photos={photos}
+        photos={localPhotos}
         canEdit={isOwner}
         onUpload={handlePhotoUpload}
         onDelete={handlePhotoDelete}
@@ -403,7 +406,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       {/* Comment Section */}
       <div ref={commentsSectionRef}>
         <CommentSection
-          comments={comments}
+          comments={localComments}
           tributeId={tribute.id}
           onCommentAdded={handleAddComment}
           user={user}

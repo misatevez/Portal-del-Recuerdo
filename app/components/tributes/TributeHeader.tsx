@@ -48,9 +48,9 @@ export function TributeHeader({
               <Trash2 className="w-5 h-5" />
             </button>
             <button
-              onClick={() => (tribute.es_premium ? onUpdatePremiumStatus(false) : onBuyCredit())}
-              className={`text-text/60 hover:text-primary ${tribute.es_premium ? "text-yellow-500" : ""}`}
-              aria-label={tribute.es_premium ? "Remove premium status" : "Buy premium credit"}
+              onClick={() => (tribute.is_premium ? onUpdatePremiumStatus(false) : onBuyCredit())}
+              className={`text-text/60 hover:text-primary ${tribute.is_premium ? "text-yellow-500" : ""}`}
+              aria-label={tribute.is_premium ? "Remove premium status" : "Buy premium credit"}
             >
               <Star className="w-5 h-5" />
             </button>

@@ -106,10 +106,10 @@ export interface TributeBiographyProps {
 }
 
 export interface TributeActionsProps {
-  onLightCandle: () => void
-  onScrollToComments: () => void
-  slug: string
-  name: string
+  onLightCandle: () => void;
+  onScrollToComments: () => void;
+  slug: string;
+  name: string;
 }
 
 export interface CandleSectionProps {
@@ -165,5 +165,12 @@ export interface SearchFilters {
 export interface PaginationOptions {
   page: number
   pageSize: number
+}
+
+export interface TributeActionsProps {
+  onLightCandle: () => void;
+  onScrollToComments: () => void;
+  slug: string;
+  name: string;
 }
 

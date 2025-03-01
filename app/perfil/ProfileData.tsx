@@ -123,7 +123,7 @@ export default function ProfileData() {
   return (
     <ProfileContent
       user={user}
-      profile={profileData || { id: user.id, nombre: "Usuario" }}
+      profile={profileData || { id: user.id, nombre: "Usuario" } as Profile}
       tributes={tributesData}
       activity={activityData}
       userCredits={0}

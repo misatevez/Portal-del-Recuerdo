@@ -78,6 +78,6 @@ export default function TributeData({ params }: { params: { slug: string } }) {
     return null
   }
 
-  return <TributeContent tribute={tribute} user={session?.user || null} />
+  return <TributeContent tribute={tribute} user={session?.user || null} candles={tribute.candles} photos={tribute.photos} comments={tribute.comments} />
 }
 

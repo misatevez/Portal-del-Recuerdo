@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Heart, MessageCircle } from "lucide-react"
 import { ShareButton } from "../sharing/ShareButton"
 import { useAuth } from "../../auth/AuthProvider"
-import type { TributeActionsProps } from "../../types"
+import type { TributeActionsProps } from "@/app/types"
 
 export function TributeActions({ onLightCandle, onScrollToComments, slug, name }: TributeActionsProps) {
   const { user } = useAuth()

@@ -91,9 +91,9 @@ export function ProfileContent({
     if (!tribute) return
 
     try {
-      const newPremiumStatus = !tribute.es_premium
+      const newPremiumStatus = !tribute.is_premium
       await updateTributePremiumStatus(tributeId, newPremiumStatus)
-      setTributes(tributes.map((t) => (t.id === tributeId ? { ...t, es_premium: newPremiumStatus } : t)))
+      setTributes(tributes.map((t) => (t.id === tributeId ? { ...t, is_premium: newPremiumStatus } : t)))
       alert(newPremiumStatus ? "Homenaje actualizado a premium" : "Homenaje cambiado a estándar")
     } catch (error) {
       console.error("Error al actualizar el estado premium:", error)

@@ -16,6 +16,8 @@ export type ExtendedUser = SupabaseUser & {
 }
 
 export type Profile = {
+  privacidad: any;
+  notificaciones: any;
   id: string;
   user_id: string;
   nombre: string;
@@ -25,6 +27,10 @@ export type Profile = {
 }
 
 export type Tribute = {
+  created_by: string;
+  photos: any[];
+  candles: any[];
+  comments: any[];
   id: string;
   titulo: string;
   nombre: string;
@@ -84,6 +90,9 @@ export type UserCredit = {
 export interface ProfileContentProps {
   user: User;
   profile: Profile;
+  tributes: Tribute[];
+  activity: any[];
+  userCredits: number;
 }
 
 // Tipo para CTAButton
@@ -141,3 +150,46 @@ export interface PhotoGalleryProps {
   onDelete: (photoId: string) => void; // Función para manejar la eliminación de fotos
   onEdit: (photoId: string) => void; // Función para manejar la edición de fotos
 } 
+
+export interface TributeActionsProps {
+  onLightCandle: () => void;
+  onScrollToComments: () => void;
+  slug: string;
+  name: string;
+}
+
+export interface TributeBiographyProps {
+  biografia: string;
+}
+
+export interface TributeCommentSectionProps {
+  comments: Comment[];
+  tributeId: string;
+  onCommentAdded: (newComment: Comment) => void;
+  user: User | null;
+  isOwner?: boolean;
+}
+
+export interface TributeHeaderProps {
+  tribute: Tribute;
+  isOwner: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onUpdatePremiumStatus: (esPremium: boolean) => void;
+  onBuyCredit: () => void;
+}
+
+export interface TributeBiographyProps {
+  biografia: string;
+} 
+
+export interface SearchFilters {
+  year?: string;
+  location?: string;
+  sortBy?: "recent" | "candles" | "name";
+}
+
+export interface PaginationOptions {
+  page: number;
+  pageSize: number;
+}

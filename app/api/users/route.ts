@@ -4,6 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 // Marcar como dinámica
 export const dynamic = 'force-dynamic'
 
+type User = {
+    id: string; // o el tipo adecuado
+    email: string;
+    // otros campos que pueda tener el usuario
+};
+
 export async function GET() {
   // Crear cliente Supabase con service role key (seguro en el servidor)
   const supabaseAdmin = createClient(
@@ -26,8 +32,8 @@ export async function GET() {
     if (profilesError) throw profilesError
     
     // Combinar datos
-    const emailMap = new Map()
-    authUsers?.users?.forEach(user => {
+    const emailMap = new Map<string, string>()
+    authUsers?.users?.forEach((user: User) => {
       emailMap.set(user.id, user.email)
     })
     

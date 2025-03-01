@@ -1,4 +1,4 @@
-import type { TributeBiographyProps } from "../../types"
+import type { TributeBiographyProps } from "@/app/types"
 
 export function TributeBiography({ biografia }: TributeBiographyProps) {
   if (!biografia) return null
