@@ -387,10 +387,12 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
       {/* Background Music - solo mostrar si es premium */}
       {isPremium ? (
-        <BackgroundMusic tributeId={tribute.id} canEdit={isOwner} />
+        <div className="mb-16">
+          <BackgroundMusic tributeId={tribute.id} canEdit={isOwner} />
+        </div>
       ) : (
         isOwner && (
-          <section className="mb-12">
+          <section className="mb-16">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-andika text-primary">Música de Fondo</h2>
             </div>
@@ -400,7 +402,6 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
                 La música de fondo es una característica exclusiva para homenajes premium. 
                 Actualiza tu homenaje a premium para añadir música de fondo.
               </p>
-
             </div>
           </section>
         )
