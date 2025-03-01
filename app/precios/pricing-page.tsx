@@ -94,18 +94,9 @@ export function PricingPage() {
     }
   }
 
-  const handlePaymentSuccess = () => {
-    setSelectedPlan(null)
+  const handlePaymentError = (error?: string) => {
     toast({
-      description: "Pago realizado con éxito. Tu plan ha sido actualizado.",
-      variant: "default",
-    })
-    // Optionally, you can fetch updated user credits here if needed
-  }
-
-  const handlePaymentError = () => {
-    toast({
-      description: "Hubo un error al procesar el pago. Por favor, intenta de nuevo.",
+      description: error || "Hubo un error al procesar el pago",
       variant: "destructive",
     })
   }
@@ -125,14 +116,14 @@ export function PricingPage() {
           planId={selectedPlan.id}
           planName={selectedPlan.nombre}
           price={selectedPlan.precio}
-          onClose={() => {
-            setSelectedPlan(null)
+          onClose={() => setSelectedPlan(null)}
+          onSuccess={() => {
             toast({
-              description: "Has cancelado el proceso de pago.",
+              description: "¡Pago procesado exitosamente!",
               variant: "default",
             })
+            setSelectedPlan(null)
           }}
-          onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
         />
       )}

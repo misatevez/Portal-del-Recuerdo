@@ -5,7 +5,15 @@ import { X, Loader } from "lucide-react"
 import Script from "next/script"
 import { updateUserCredits } from "../../lib/supabase"
 import { useAuth } from "../../auth/AuthProvider"
-import type { PaymentDialogProps } from "../../types"
+
+interface PaymentDialogProps {
+  planId: string
+  planName: string
+  price: number
+  onClose: () => void
+  onSuccess: () => void
+  onError: (error?: string) => void
+}
 
 export function PaymentDialog({ planId, planName, price, onClose, onSuccess, onError }: PaymentDialogProps) {
   const [preferenceId, setPreferenceId] = useState("")
@@ -30,12 +38,16 @@ export function PaymentDialog({ planId, planName, price, onClose, onSuccess, onE
         }),
       })
 
+      if (!response.ok) {
+        throw new Error("Error al crear la preferencia de pago")
+      }
+
       const data = await response.json()
       setPreferenceId(data.id)
       setLoading(false)
     } catch (error) {
       console.error("Error creating preference:", error)
-      onError()
+      onError(error instanceof Error ? error.message : "Error al crear la preferencia de pago")
     }
   }
 
@@ -56,7 +68,7 @@ export function PaymentDialog({ planId, planName, price, onClose, onSuccess, onE
       console.error("Error en el pago:", error)
       // Asegurarse de que el error tenga un mensaje
       const errorMessage = (error as Error).message || "Error desconocido"
-      onError()
+      onError(errorMessage)
     } finally {
       setLoading(false)
       onClose()
