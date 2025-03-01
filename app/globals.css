@@ -126,3 +126,106 @@ button {
   transform: scale(1.05);
 }
 
+/* Estilos personalizados para Swiper */
+.swiper-contained {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.swiper {
+  padding: 10px 0 40px !important;
+  margin: 0 -10px !important; /* Compensar el padding */
+}
+
+.swiper-wrapper {
+  overflow: visible !important;
+}
+
+.swiper-slide {
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ajustar posición de los botones de navegación */
+.swiper-button-next,
+.swiper-button-prev {
+  color: var(--color-primary) !important;
+  background: rgba(20, 29, 24, 0.8) !important;
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 50%;
+  border: 1px solid var(--color-primary);
+  transition: all 0.3s ease;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+}
+
+.swiper-button-prev {
+  left: 10px !important;
+}
+
+.swiper-button-next {
+  right: 10px !important;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: var(--color-primary) !important;
+  color: var(--color-background) !important;
+}
+
+.swiper-button-next:after,
+.swiper-button-prev:after {
+  font-size: 16px !important;
+  font-weight: bold;
+}
+
+/* Asegurarse de que la paginación esté contenida y centrada */
+.swiper-horizontal > .swiper-pagination-bullets,
+.swiper-pagination-bullets.swiper-pagination-horizontal {
+  bottom: 0 !important;
+  width: 100% !important;
+  left: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  padding-bottom: 10px !important;
+}
+
+/* Ajustar el contenedor de bullets dinámicos */
+.swiper-pagination-bullets-dynamic {
+  overflow: visible !important;
+  transform: translateX(-50%) !important;
+  left: 50% !important;
+  white-space: nowrap !important;
+}
+
+/* Ajustar el espacio entre bullets */
+.swiper-pagination-bullet {
+  margin: 0 4px !important;
+}
+
+/* Mejorar la transición de los bullets */
+.swiper-pagination-bullet-active-prev-prev,
+.swiper-pagination-bullet-active-prev,
+.swiper-pagination-bullet-active-next,
+.swiper-pagination-bullet-active-next-next {
+  transform: scale(0.66) !important;
+}
+
+.swiper-pagination-bullet-active {
+  transform: scale(1) !important;
+}
+
+/* Estilo para los bullets dinámicos */
+.swiper-pagination-bullet-active-main {
+  background: var(--color-primary) !important;
+}
+
+.swiper-pagination-bullet-active-prev,
+.swiper-pagination-bullet-active-next {
+  transform: scale(0.8) !important;
+}
+

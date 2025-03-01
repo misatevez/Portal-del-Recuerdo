@@ -122,7 +122,8 @@ export interface PhotoGalleryProps {
   canEdit: boolean
   onUpload: (file: File) => void
   onDelete: (id: string) => void
-  onUpdateDescription: (id: string, description: string) => void
+  isPremium?: boolean
+  photoLimit?: number | null
 }
 
 export interface BackgroundMusicProps {

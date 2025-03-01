@@ -188,23 +188,27 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
 
   const handlePhotoUpload = async (file: File) => {
     try {
-      // Verificar si el homenaje es premium o si ya ha alcanzado el límite de fotos gratuitas
-      if (!isPremium && localPhotos.length >= 3) {
-        toast.error(
-          "Has alcanzado el límite de fotos para homenajes gratuitos. Actualiza a premium para subir más fotos.",
-          { duration: 5000 }
-        )
+      // Verificar si el homenaje es premium
+      if (!isPremium) {
+        toast.error("Necesitas un homenaje premium para añadir fotos", { duration: 5000 })
         return
       }
 
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${tribute.id}_${Date.now()}.${fileExt}`
+      const filePath = `tribute_images/${tribute.id}/${fileName}`
+
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("tribute-images")
-        .upload(`${tribute.id}/${file.name}`, file)
+        .from("storage")
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
 
       if (uploadError) throw uploadError
 
       if (uploadData) {
-        const { data } = supabase.storage.from("tribute-images").getPublicUrl(uploadData.path)
+        const { data } = supabase.storage.from("storage").getPublicUrl(uploadData.path)
 
         const { data: photoData, error: photoError } = await supabase
           .from("photos")
@@ -223,7 +227,7 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
       }
     } catch (error) {
       console.error("Error uploading photo:", error)
-      toast.error("Error al subir la foto")
+      toast.error("Error al subir la foto. Intenta de nuevo.")
     }
   }
 
@@ -376,9 +380,8 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
         canEdit={isOwner}
         onUpload={handlePhotoUpload}
         onDelete={handlePhotoDelete}
-        onUpdateDescription={handleUpdateDescription}
         isPremium={isPremium}
-        photoLimit={isPremium ? null : 0} // Límite de 3 fotos para homenajes gratuitos, sin límite para premium
+        photoLimit={isPremium ? null : 0} // 0 para homenajes gratuitos, sin límite para premium
       />
       )}
 
