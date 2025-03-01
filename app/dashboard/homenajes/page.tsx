@@ -138,15 +138,7 @@ export default function TributesPage() {
           />
         </div>
         
-        <div className="flex items-center">
-          <button
-            onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-            className="flex items-center px-4 py-2 border border-primary/30 rounded-md text-text/80 hover:bg-primary/10 font-montserrat"
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </button>
-        </div>
+
       </div>
       
       {/* Panel de filtros */}
@@ -279,8 +271,6 @@ export default function TributesPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
                         tribute.es_premium 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-blue-100 text-blue-800'
                       }`}>
                         {tribute.es_premium ? 'Premium' : 'Estándar'}
                       </span>
@@ -289,17 +279,16 @@ export default function TributesPage() {
                       <div className="flex items-center justify-end space-x-2">
                         <Link 
                           href={`/homenaje/${tribute.slug}`}
-                          className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          className="p-1.5 rounded-full  elegant-action-button hover:text-white "
                           title="Ver homenaje"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <button 
                           onClick={() => togglePremiumStatus(tribute.id, tribute.es_premium)}
-                          className={`p-1.5 rounded-full ${
+                          className={`p-1.5 rounded-full elegant-action-button hover:text-white ${
                             tribute.es_premium 
-                              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' 
-                              : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                             
                           }`}
                           title={tribute.es_premium ? 'Quitar premium' : 'Marcar como premium'}
                         >
@@ -307,14 +296,15 @@ export default function TributesPage() {
                         </button>
                         <Link 
                           href={`/editar-homenaje/${tribute.slug}`}
-                          className="p-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                          className="p-1.5 rounded-full bg-primary/10 text-primary hover:text-white elegant-action-button "
                           title="Editar homenaje"
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
                         <button 
                           onClick={() => handleDeleteTribute(tribute.id)}
-                          className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          className="p-1.5 rounded-full text-red-600 hover:bg-red elegant-action-button "
+
                           title="Eliminar homenaje"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -339,6 +329,32 @@ export default function TributesPage() {
         confirmText="Eliminar"
         cancelText="Cancelar"
       />
+       <style jsx global>{`
+        .elegant-action-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: rgba(var(--color-surface-rgb), 0.8);
+          border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .elegant-action-button:hover {
+          background-color: rgba(var(--color-surface-rgb), 1);
+          border-color: rgba(var(--color-primary-rgb), 0.4);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
+        }
+        
+        .elegant-action-button:active {
+          transform: translateY(0);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
     </div>
   )
 } 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "../../lib/supabase"
-import { Search, Filter, Check, X, Eye, MessageSquare } from "lucide-react"
+import { Search, Filter, Check, X, Eye, MessageSquare, Trash2 } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog"
 import Link from "next/link"
@@ -151,13 +151,7 @@ export default function CommentModerationPage() {
           />
         </div>
         
-        <button 
-          className="elegant-button px-4 py-2 rounded-md font-andika flex items-center"
-          onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-        >
-          <Filter className="h-5 w-5 mr-2" />
-          Filtros
-        </button>
+
       </div>
       
       {/* Panel de filtros */}
@@ -254,10 +248,10 @@ export default function CommentModerationPage() {
                   <div className="ml-auto">
                     <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
                       comment.estado_check === 'aprobado'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-white text-green-800'
                         : comment.estado_check === 'rechazado'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-white text-red-800'
+                          : 'bg-white text-yellow-800'
                     }`}>
                       {comment.estado_check === 'aprobado' 
                         ? 'Aprobado' 
@@ -302,7 +296,7 @@ export default function CommentModerationPage() {
                   {comment.estado_check !== 'rechazado' && (
                     <button 
                       onClick={() => handleRejectComment(comment.id)}
-                      className="p-2 rounded-md bg-red-100 text-red-600 hover:bg-red-200 flex items-center"
+                      className="p-2 rounded-md  hover:bg-red hover:text-white flex items-center"
                       title="Rechazar comentario"
                     >
                       <X className="w-4 h-4 mr-1" />
@@ -312,7 +306,7 @@ export default function CommentModerationPage() {
                   
                   <Link 
                     href={`/homenaje/${comment.tributes?.slug || '#'}`}
-                    className="p-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20 flex items-center"
+                    className="p-2 rounded-md bg-primary/10 text-primary hover:text-white flex items-center "
                     title="Ver en contexto"
                   >
                     <Eye className="w-4 h-4 mr-1" />
@@ -321,10 +315,10 @@ export default function CommentModerationPage() {
                   
                   <button 
                     onClick={() => handleDeleteComment(comment.id)}
-                    className="p-2 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                    className="p-2 rounded-md  text-red-600 elegant-action-button"
                     title="Eliminar comentario"
                   >
-                    <X className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -343,6 +337,32 @@ export default function CommentModerationPage() {
         confirmText="Eliminar"
         cancelText="Cancelar"
       />
+       <style jsx global>{`
+        .elegant-action-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: rgba(var(--color-surface-rgb), 0.8);
+          border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .elegant-action-button:hover {
+          background-color: rgba(var(--color-surface-rgb), 1);
+          border-color: rgba(var(--color-primary-rgb), 0.4);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
+        }
+        
+        .elegant-action-button:active {
+          transform: translateY(0);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
     </div>
   )
 } 
