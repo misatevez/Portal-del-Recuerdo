@@ -10,9 +10,11 @@ import {
   MessageSquare, 
   LogOut,
   Menu,
-  X
+  X,
+  ChevronLeft
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 export default function DashboardLayout({
   children,
@@ -22,8 +24,23 @@ export default function DashboardLayout({
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true)
+      }
+    }
+    
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -36,14 +53,12 @@ export default function DashboardLayout({
       
       setUser(user)
       
-      // Verificar si el usuario es admin usando exactamente la misma lógica que en Navbar.tsx
       try {
         const { data } = await supabase.from("moderators").select("role").eq("id", user.id).maybeSingle()
         
         if (data?.role === "admin") {
           setIsAdmin(true)
         } else {
-          // Si no es admin, redirigir a la página principal
           router.push('/')
           return
         }
@@ -58,10 +73,24 @@ export default function DashboardLayout({
     
     checkUser()
   }, [router])
+
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }, [pathname, isMobile])
   
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
+  }
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
+
+  const closeSidebar = () => {
+    setSidebarOpen(false)
   }
   
   if (loading) {
@@ -78,157 +107,142 @@ export default function DashboardLayout({
     return null
   }
 
+  const menuItems = [
+    { 
+      href: "/dashboard", 
+      icon: LayoutDashboard, 
+      label: "Dashboard",
+      isActive: pathname === "/dashboard"
+    },
+    { 
+      href: "/dashboard/usuarios", 
+      icon: Users, 
+      label: "Usuarios",
+      isActive: pathname === "/dashboard/usuarios"
+    },
+    { 
+      href: "/dashboard/homenajes", 
+      icon: Heart, 
+      label: "Homenajes",
+      isActive: pathname === "/dashboard/homenajes"
+    },
+    { 
+      href: "/dashboard/moderacion", 
+      icon: MessageSquare, 
+      label: "Comentarios",
+      isActive: pathname === "/dashboard/moderacion"
+    }
+  ]
+
   return (
-    <div className="min-h-screen bg-surface flex">
-      {/* Sidebar para pantallas medianas y grandes */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-background border-r border-primary/20 hidden md:block transition-all duration-300 ease-in-out`}>
-        <div className="p-6">
+    <div className="min-h-screen bg-surface flex relative">
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black bg-opacity-50"
+          onClick={closeSidebar}
+        />
+      )}
+
+      <div className={`
+        ${isMobile ? 'fixed' : 'relative'}
+        ${sidebarOpen ? (isMobile ? 'w-64' : 'w-64') : (isMobile ? '-translate-x-full' : 'w-20')}
+        ${isMobile ? 'z-50' : 'z-30'}
+        bg-background border-r border-primary/20 
+        transition-all duration-300 ease-in-out
+        h-screen flex flex-col
+      `}>
+        <div className="p-4 border-b border-primary/20">
           <div className="flex items-center justify-between">
-            {sidebarOpen && (
+            {(sidebarOpen || isMobile) && (
               <h1 className="text-xl font-andika text-primary">Portal Admin</h1>
             )}
             <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-md hover:bg-primary/10 text-primary"
+              onClick={toggleSidebar}
+              className="p-2 rounded-md hover:bg-primary/10 text-primary transition-colors"
+              title={sidebarOpen ? "Contraer menú" : "Expandir menú"}
             >
-              <Menu className="w-5 h-5" />
+              {sidebarOpen ? (
+                isMobile ? <X className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
         
-        <nav className="mt-6">
+        <nav className="flex-1 mt-6">
           <ul className="space-y-2 px-4">
-            <li>
-              <Link 
-                href="/dashboard" 
-                className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-              >
-                <LayoutDashboard className="w-5 h-5 mr-3" />
-                {sidebarOpen && <span className="font-montserrat">Dashboard</span>}
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/dashboard/usuarios" 
-                className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-              >
-                <Users className="w-5 h-5 mr-3" />
-                {sidebarOpen && <span className="font-montserrat">Usuarios</span>}
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/dashboard/homenajes" 
-                className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-              >
-                <Heart className="w-5 h-5 mr-3" />
-                {sidebarOpen && <span className="font-montserrat">Homenajes</span>}
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/dashboard/moderacion" 
-                className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-              >
-                <MessageSquare className="w-5 h-5 mr-3" />
-                {sidebarOpen && <span className="font-montserrat">Comentarios</span>}
-              </Link>
-            </li>
-            <li className="mt-8">
-              <button 
-                onClick={handleLogout}
-                className="flex items-center w-full p-3 rounded-md hover:bg-red-500/10 text-text/80 hover:text-red-500 transition-colors"
-              >
-                <LogOut className="w-5 h-5 mr-3" />
-                {sidebarOpen && <span className="font-montserrat">Cerrar Sesión</span>}
-              </button>
-            </li>
+            {menuItems.map((item) => (
+              <li key={item.href}>
+                <Link 
+                  href={item.href}
+                  onClick={isMobile ? closeSidebar : undefined}
+                  className={`
+                    flex items-center p-3 rounded-md transition-colors
+                    ${item.isActive 
+                      ? 'bg-primary/10 text-primary border-r-2 border-primary' 
+                      : 'text-text/80 hover:text-primary hover:bg-primary/5'
+                    }
+                  `}
+                  title={!sidebarOpen && !isMobile ? item.label : undefined}
+                >
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  {(sidebarOpen || isMobile) && (
+                    <span className="font-montserrat ml-3">{item.label}</span>
+                  )}
+                </Link>
+              </li>
+            ))}
           </ul>
+          
+          <div className="mt-8 px-4">
+            <button 
+              onClick={handleLogout}
+              className={`
+                flex items-center w-full p-3 rounded-md 
+                text-text/80 hover:text-red-500 hover:bg-red-500/10 
+                transition-colors
+              `}
+              title={!sidebarOpen && !isMobile ? "Cerrar Sesión" : undefined}
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              {(sidebarOpen || isMobile) && (
+                <span className="font-montserrat ml-3">Cerrar Sesión</span>
+              )}
+            </button>
+          </div>
         </nav>
       </div>
       
-      {/* Sidebar móvil */}
-      <div className="md:hidden fixed inset-0 z-50 bg-black bg-opacity-50" style={{ display: sidebarOpen ? 'block' : 'none' }}>
-        <div className="w-64 h-full bg-background">
-          <div className="p-6 flex justify-between items-center">
-            <h1 className="text-xl font-andika text-primary">Portal Admin</h1>
-            <button 
-              onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-md hover:bg-primary/10 text-primary"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <nav className="mt-6">
-            <ul className="space-y-2 px-4">
-              <li>
-                <Link 
-                  href="/dashboard" 
-                  className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <LayoutDashboard className="w-5 h-5 mr-3" />
-                  <span className="font-montserrat">Dashboard</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/dashboard/usuarios" 
-                  className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Users className="w-5 h-5 mr-3" />
-                  <span className="font-montserrat">Usuarios</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/dashboard/homenajes" 
-                  className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Heart className="w-5 h-5 mr-3" />
-                  <span className="font-montserrat">Homenajes</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/dashboard/moderacion" 
-                  className="flex items-center p-3 rounded-md hover:bg-primary/10 text-text/80 hover:text-primary transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <MessageSquare className="w-5 h-5 mr-3" />
-                  <span className="font-montserrat">Comentarios</span>
-                </Link>
-              </li>
-              <li className="mt-8">
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center w-full p-3 rounded-md hover:bg-red-500/10 text-text/80 hover:text-red-500 transition-colors"
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  <span className="font-montserrat">Cerrar Sesión</span>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </div>
-      
-      {/* Botón de menú móvil */}
-      <div className="md:hidden fixed top-4 left-4 z-40">
+      {isMobile && !sidebarOpen && (
         <button 
           onClick={() => setSidebarOpen(true)}
-          className="p-2 rounded-md bg-background shadow-md text-primary"
+          className="fixed top-4 left-4 z-30 p-3 rounded-lg bg-background shadow-lg border border-primary/20 text-primary hover:bg-primary/5 transition-colors"
+          title="Abrir menú"
         >
           <Menu className="w-6 h-6" />
         </button>
-      </div>
+      )}
       
-      {/* Contenido principal */}
-      <div className="flex-1 p-8 md:p-10 overflow-auto">
-        {children}
+      <div className={`
+        flex-1 overflow-auto
+        ${!isMobile && !sidebarOpen ? 'ml-0' : ''}
+      `}>
+        {!isMobile && !sidebarOpen && (
+          <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-primary/20 p-4">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-md hover:bg-primary/10 text-primary transition-colors"
+              title="Abrir menú"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
+        )}
+        
+        <div className="p-8 md:p-10">
+          {children}
+        </div>
       </div>
     </div>
   )
