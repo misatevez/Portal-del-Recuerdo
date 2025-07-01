@@ -87,20 +87,7 @@ export function ProfileContent({
     }
   }
 
-  const handleTogglePremium = async (tributeId: string) => {
-    const tribute = tributes.find((t) => t.id === tributeId)
-    if (!tribute) return
 
-    try {
-      const newPremiumStatus = !tribute.is_premium
-      await updateTributePremiumStatus(tributeId, newPremiumStatus)
-      setTributes(tributes.map((t) => (t.id === tributeId ? { ...t, is_premium: newPremiumStatus } : t)))
-      alert(newPremiumStatus ? "Homenaje actualizado a premium" : "Homenaje cambiado a estándar")
-    } catch (error) {
-      console.error("Error al actualizar el estado premium:", error)
-      alert("Error al actualizar el estado del homenaje")
-    }
-  }
 
   return (
     <div className="min-h-screen bg-surface pt-20">
@@ -190,19 +177,33 @@ export function ProfileContent({
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {tributes.map((tribute) => (
-                      <TributeCard
-                        key={tribute.id}
-                        id={tribute.id}
-                        slug={tribute.slug}
-                        nombre={tribute.nombre}
-                        fechaNacimiento={tribute.fecha_nacimiento}
-                        fechaFallecimiento={tribute.fecha_fallecimiento}
-                        imagen={tribute.imagen_principal || "/placeholder.svg"}
-                        isOwner={true}
-                        onEdit={() => handleEdit(tribute.slug)}
-                        onDelete={() => handleDelete(tribute.id)}
-                        onTogglePremium={() => handleTogglePremium(tribute.id)}
-                      />
+                      <div key={tribute.id} className="flex flex-col gap-4">
+                        <TributeCard
+                          id={tribute.id}
+                          slug={tribute.slug}
+                          nombre={tribute.nombre}
+                          fechaNacimiento={tribute.fecha_nacimiento}
+                          fechaFallecimiento={tribute.fecha_fallecimiento}
+                          imagen={tribute.imagen_principal || "/placeholder.svg"}
+                          isOwner={true}
+                          isPremium={tribute.is_premium}
+                          onEdit={() => handleEdit(tribute.slug)}
+                        />
+                        {!tribute.is_premium && userCredits > 0 && (
+                          <CreditManager
+                            userId={user.id}
+                            tribute={tribute}
+                            showTitle={false}
+                            onCreditApplied={() => {
+                              // Actualizar la UI para reflejar el cambio
+                              const updatedTributes = tributes.map(t => 
+                                t.id === tribute.id ? { ...t, is_premium: true } : t
+                              );
+                              setTributes(updatedTributes);
+                            }}
+                          />
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

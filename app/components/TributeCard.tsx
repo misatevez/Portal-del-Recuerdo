@@ -12,9 +12,9 @@ interface TributeCardProps {
   fechaFallecimiento: string
   imagen: string
   isOwner?: boolean
+  isPremium?: boolean
   onEdit?: () => void
   onDelete?: () => void
-  onTogglePremium: () => void
 }
 
 const formatDate = (dateString: string) => {
@@ -30,14 +30,19 @@ export function TributeCard({
   fechaFallecimiento,
   imagen,
   isOwner,
+  isPremium,
   onEdit,
   onDelete,
-  onTogglePremium,
 }: TributeCardProps) {
   return (
     <Link href={`/homenaje/${slug || id}`} className="block group">
       <div className="pointer-events-auto">
         <div className="flex flex-col items-center relative group">
+          {isPremium && (
+            <div className="absolute top-0 left-0 p-1 bg-yellow-500 text-background rounded-full z-10" title="Homenaje Premium">
+              <Star className="w-4 h-4 fill-current" />
+            </div>
+          )}
           {isOwner && (
             <div className="absolute top-0 right-0 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto">
               <button
@@ -60,16 +65,7 @@ export function TributeCard({
               >
                 <Trash2 className="w-4 h-4" />
               </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onTogglePremium()
-                }}
-                className="p-1 bg-yellow-500 text-background rounded-full"
-              >
-                <Star className="w-4 h-4" />
-              </button>
+
             </div>
           )}
           <div className="relative w-48 h-48 mb-4">
