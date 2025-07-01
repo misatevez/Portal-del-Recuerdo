@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Heart, X } from "lucide-react"
+import { X } from "lucide-react"
+import { AnimatedCandle } from "../AnimatedCandle"
 import { supabase } from "../../lib/supabase"
 import toast from "react-hot-toast"
 import { ConfirmDialog } from "../ui/ConfirmDialog"
@@ -179,7 +180,7 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
                 </div>
                 
                 <div className="flex justify-center mb-2">
-                  <Heart className="w-8 h-8 text-primary/70" />
+                  <AnimatedCandle />
                 </div>
                 
                 <p className="font-montserrat text-sm mb-1">
@@ -255,7 +256,7 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
               )}
               
               <div className="flex justify-center mb-2">
-                <Heart className="w-8 h-8 text-primary" />
+                <AnimatedCandle />
               </div>
               <p className="font-montserrat text-sm mb-1">
                 {candle.profiles?.nombre || "Anónimo"}
@@ -279,7 +280,7 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
             {userPendingCandles.map((candle) => (
               <div key={candle.id} className="bg-surface/50 p-4 rounded-lg text-center border border-primary/20">
                 <div className="flex justify-center mb-2">
-                  <Heart className="w-8 h-8 text-primary/50" />
+                  <AnimatedCandle />
                 </div>
                 <p className="font-montserrat text-sm mb-1">
                   {candle.profiles?.nombre || "Anónimo"}

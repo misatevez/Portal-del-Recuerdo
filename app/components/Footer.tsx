@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Heart, Mail, MapPin, Phone } from "lucide-react"
+import { Mail, MapPin, Phone } from "lucide-react"
+import { AnimatedCandle } from "./AnimatedCandle"
 
 export function Footer() {
   return (
@@ -8,7 +9,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center mb-4">
-              <Heart className="w-6 h-6 text-primary" />
+              <AnimatedCandle />
               <span className="ml-2 text-xl font-serif text-primary">Portal del Recuerdo</span>
             </div>
             <p className="text-text/80">
