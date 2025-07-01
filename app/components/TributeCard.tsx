@@ -15,6 +15,7 @@ interface TributeCardProps {
   isPremium?: boolean
   onEdit?: () => void
   onDelete?: () => void
+  actionSlot?: React.ReactNode
 }
 
 const formatDate = (dateString: string) => {
@@ -33,6 +34,7 @@ export function TributeCard({
   isPremium,
   onEdit,
   onDelete,
+  actionSlot,
 }: TributeCardProps) {
   return (
     <Link href={`/homenaje/${slug || id}`} className="block group">
@@ -59,12 +61,13 @@ export function TributeCard({
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  onDelete && onDelete()
+                  onDelete?.()
                 }}
                 className="p-1 bg-red-500 text-background rounded-full"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
+              {actionSlot}
 
             </div>
           )}

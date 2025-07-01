@@ -5,12 +5,12 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { User, Settings, Grid, Clock, Loader, Heart, Mail, Calendar } from "lucide-react"
-import { TributeCard } from "../components/TributeCard"
+import { TributeCard } from "../components/TributeCard";
+import { CreditManager } from "../components/credits/CreditManager";
 import { supabase, updateTributePremiumStatus } from "../lib/supabase"
 import type { ProfileContentProps, Tribute } from "../types"
 import { toast } from "react-hot-toast"
 import { ConfirmDialog } from "../components/ui/ConfirmDialog"
-import { CreditManager } from "../components/credits/CreditManager"
 
 export function ProfileContent({
   user,
@@ -188,21 +188,23 @@ export function ProfileContent({
                           isOwner={true}
                           isPremium={tribute.is_premium}
                           onEdit={() => handleEdit(tribute.slug)}
+                          onDelete={() => handleDelete(tribute.id)}
+                          actionSlot={
+                            !tribute.is_premium && userCredits > 0 ? (
+                              <CreditManager
+                                userId={user.id}
+                                tribute={tribute}
+                                renderAs="button"
+                                onCreditApplied={() => {
+                                  const updatedTributes = tributes.map((t) =>
+                                    t.id === tribute.id ? { ...t, is_premium: true } : t
+                                  )
+                                  setTributes(updatedTributes)
+                                }}
+                              />
+                            ) : null
+                          }
                         />
-                        {!tribute.is_premium && userCredits > 0 && (
-                          <CreditManager
-                            userId={user.id}
-                            tribute={tribute}
-                            showTitle={false}
-                            onCreditApplied={() => {
-                              // Actualizar la UI para reflejar el cambio
-                              const updatedTributes = tributes.map(t => 
-                                t.id === tribute.id ? { ...t, is_premium: true } : t
-                              );
-                              setTributes(updatedTributes);
-                            }}
-                          />
-                        )}
                       </div>
                     ))}
                   </div>

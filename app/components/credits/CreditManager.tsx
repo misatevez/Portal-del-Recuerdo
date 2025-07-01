@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Crown } from "lucide-react"
+import { Crown, Star } from "lucide-react"
 import { supabase } from "../../lib/supabase"
 import { PaymentDialog } from "../payments/PaymentDialog"
 import type { Tribute } from "../../types"
@@ -13,6 +13,7 @@ interface CreditManagerProps {
   className?: string
   tribute?: Tribute
   onCreditApplied?: () => void
+  renderAs?: "card" | "button"
 }
 
 export function CreditManager({ 
@@ -20,7 +21,8 @@ export function CreditManager({
   showTitle = true, 
   className = "",
   tribute,
-  onCreditApplied 
+  onCreditApplied,
+  renderAs = "card"
 }: CreditManagerProps) {
   const [credits, setCredits] = useState(0)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
@@ -82,6 +84,27 @@ export function CreditManager({
   }
 
   if (loading) return null
+
+  if (renderAs === "button") {
+    if (!tribute || credits === 0) {
+      return null
+    }
+
+    return (
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleApplyCredit()
+        }}
+        disabled={loading}
+        className="p-1 bg-yellow-500 text-background rounded-full"
+        title="Hacer Premium con 1 crédito"
+      >
+        <Star className="w-4 h-4" />
+      </button>
+    )
+  }
 
   return (
     <div className={`elegant-card p-6 rounded-lg ${className}`}>
