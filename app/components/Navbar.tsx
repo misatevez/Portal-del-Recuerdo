@@ -3,54 +3,33 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, X, Shield, LogOut, Star } from "lucide-react"
-import { useSupabase } from "../auth/AuthProvider"
+import { useAuth } from "../auth/AuthProvider"
 import { NotificationCenter } from "../notifications/NotificationCenter"
 import { supabase } from "../lib/supabase"
 
 export default function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [credits, setCredits] = useState(0)
-  const { supabase, session } = useSupabase()
-  const user = session?.user
+  const { user, supabase } = useAuth()
   const navLinkClass = "text-text hover:text-primary transition-colors font-andika"
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchAdminStatus = async () => {
       if (!user) {
         setIsAdmin(false)
-        setCredits(0)
         return
       }
-
-      // Fetch admin status
       try {
+        // Fetch admin status
         const { data } = await supabase.from("moderators").select("role").eq("id", user.id).maybeSingle()
-        setIsAdmin(data?.role === "admin")
+        setIsAdmin(!!data && data.role === "admin")
       } catch (err) {
         console.error("Error checking admin status:", err)
         setIsAdmin(false)
       }
-
-      // Fetch credits
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('credits')
-          .eq('id', user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
-        setCredits(data?.credits ?? 0);
-      } catch (err) {
-        console.error("Error fetching credits:", err)
-        setCredits(0)
-      }
     }
 
-    fetchData()
+    fetchAdminStatus()
   }, [user, supabase])
 
   const handleLogout = async () => {
@@ -100,9 +79,9 @@ export default function Navbar() {
                   <Link href="/perfil" className={navLinkClass}>
                     Mi Perfil
                   </Link>
-                  <div className="flex items-center gap-1 text-primary" title={`${credits} créditos disponibles`}>
+                  <div className="flex items-center gap-1 text-primary" title={`${user?.credits ?? 0} créditos disponibles`}>
                     <Star className="w-4 h-4" />
-                    <span>{credits}</span>
+                    <span>{user?.credits ?? 0}</span>
                   </div>
                 </div>
                 <button onClick={handleLogout} className={`${navLinkClass} p-2`} aria-label="Cerrar Sesión">
@@ -159,7 +138,7 @@ export default function Navbar() {
                 </Link>
                 <div className="px-3 py-2 flex items-center gap-2 text-primary">
                   <Star className="w-4 h-4" />
-                  <span>{credits} créditos</span>
+                  <span>{user?.credits ?? 0} créditos</span>
                 </div>
                 <button
                   onClick={handleLogout}
