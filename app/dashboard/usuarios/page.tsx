@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import toast from 'react-hot-toast'
 import { Ban, Trash2, CheckCircle, UserPlus } from 'lucide-react'
+import { Button } from '@/components/ui/button' // Asumiendo que usas shadcn/ui
 
-// Definimos un tipo más completo para el perfil del usuario
 type UserProfile = {
   id: string
   email: string | null
@@ -17,23 +16,28 @@ type UserProfile = {
 }
 
 export default function UsersPage() {
-  const supabase = createClientComponentClient()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [creditAmounts, setCreditAmounts] = useState<{ [key: string]: number }>({})
 
   const fetchUsers = async () => {
     setLoading(true)
-    const { data, error } = await supabase.rpc('get_all_users_admin')
+    try {
+      const response = await fetch('/api/users/list')
+      const data = await response.json()
 
-    if (error) {
-      toast.error('Error al cargar los usuarios.')
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al cargar los usuarios.')
+      }
+      
+      setUsers(data)
+    } catch (error: any) {
+      toast.error(`Error al cargar usuarios: ${error.message}`)
       console.error('Error fetching users:', error)
       setUsers([])
-    } else {
-      setUsers(data || [])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -52,9 +56,7 @@ export default function UsersPage() {
     try {
       const response = await fetch('/api/users/assign-credits', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, amount }),
       })
 
@@ -65,8 +67,7 @@ export default function UsersPage() {
       }
 
       toast.success('Créditos asignados con éxito.', { id: toastId })
-      // Actualizar la UI
-      setUsers(users.map(u => u.id === userId ? { ...u, credits: u.credits + amount } : u))
+      fetchUsers() // Recargamos los datos para ver el cambio
       setCreditAmounts(prev => ({ ...prev, [userId]: 0 }))
 
     } catch (error: any) {
@@ -74,8 +75,6 @@ export default function UsersPage() {
       console.error('Error assigning credits:', error)
     }
   }
-
-  // ... (aquí irían las otras funciones como ban, delete, etc. que podemos añadir después si es necesario)
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><p>Cargando usuarios...</p></div>
@@ -95,9 +94,6 @@ export default function UsersPage() {
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Asignar Créditos</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Rol</th>
-                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
-                    <span className="sr-only">Acciones</span>
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -131,9 +127,6 @@ export default function UsersPage() {
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary/80'}`}>
                         {user.role || 'user'}
                       </span>
-                    </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                      {/* Aquí irían los botones de acción como Banear/Desbanear/Eliminar */}
                     </td>
                   </tr>
                 ))}

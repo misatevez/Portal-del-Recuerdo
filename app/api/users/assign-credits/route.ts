@@ -1,6 +1,7 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '../../../lib/supabaseAdmin' // Ruta relativa corregida
 
 export async function POST(request: Request) {
   const { userId, amount } = await request.json()
@@ -9,46 +10,52 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Datos de entrada inválidos.' }, { status: 400 })
   }
 
+  // 1. Verificación de permisos con el cliente normal
   const supabase = createRouteHandlerClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
 
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado.' }, { status: 401 })
+  }
+
+  const { data: adminProfile, error: adminError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single()
+
+  if (adminError || adminProfile?.role !== 'admin') {
+    return NextResponse.json({ error: 'Acción no permitida. Se requiere rol de administrador.' }, { status: 403 })
+  }
+
+  // 2. Operación con privilegios usando el cliente de administración
   try {
-    // Primero, verificar si el usuario que hace la solicitud es un administrador
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado. Debes iniciar sesión.' }, { status: 401 })
-    }
-
-    const { data: adminProfile, error: adminError } = await supabase
+    const { data: userData, error: userError } = await supabaseAdmin
       .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
+      .select('credits')
+      .eq('id', userId)
       .single()
 
-    if (adminError || !adminProfile) {
-      console.error('Error al verificar el rol del admin:', JSON.stringify(adminError, null, 2))
-      return NextResponse.json({ error: 'No se pudo verificar el rol del administrador.' }, { status: 500 })
+    if (userError || !userData) {
+      return NextResponse.json({ error: 'No se encontró al usuario para asignarle créditos.' }, { status: 404 })
     }
 
-    if (adminProfile.role !== 'admin') {
-      return NextResponse.json({ error: 'Acción no permitida. Se requiere rol de administrador.' }, { status: 403 })
-    }
+    const newCredits = (userData.credits || 0) + amount
 
-    // Si es admin, proceder a llamar a la función RPC para asignar créditos
-    const { error: rpcError } = await supabase.rpc('admin_assign_credits', {
-      p_user_id: userId,
-      p_amount: amount,
-    })
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ credits: newCredits })
+      .eq('id', userId)
 
-    if (rpcError) {
-      // Este es el log mejorado que nos dirá qué está pasando
-      console.error('Error al llamar a RPC admin_assign_credits:', JSON.stringify(rpcError, null, 2))
-      return NextResponse.json({ error: 'Error al asignar créditos en la base de datos.' }, { status: 500 })
+    if (updateError) {
+      console.error('Error al actualizar créditos con cliente admin:', updateError)
+      return NextResponse.json({ error: 'Error al actualizar los créditos en la base de datos.' }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Créditos asignados correctamente.' })
 
   } catch (error: any) {
-    console.error('Error inesperado en el endpoint de asignar créditos:', JSON.stringify(error, null, 2))
+    console.error('Error inesperado en el endpoint de asignar créditos:', error)
     return NextResponse.json({ error: 'Ocurrió un error inesperado.' }, { status: 500 })
   }
 }
