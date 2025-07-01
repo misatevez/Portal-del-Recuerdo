@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Menu, X, Shield, LogOut } from "lucide-react"
+import { Menu, X, Shield, LogOut, Star } from "lucide-react"
 import { useAuth } from "../auth/AuthProvider"
 import { NotificationCenter } from "../notifications/NotificationCenter"
 import { supabase } from "../lib/supabase"
@@ -75,9 +75,15 @@ export default function Navbar() {
                   </Link>
                 )}
      
-                <Link href="/perfil" className={navLinkClass}>
-                  Mi Perfil
-                </Link>
+                <div className="flex items-center gap-4">
+                  <Link href="/perfil" className={navLinkClass}>
+                    Mi Perfil
+                  </Link>
+                  <div className="flex items-center gap-1 text-primary" title={`${user?.credits ?? 0} créditos disponibles`}>
+                    <Star className="w-4 h-4" />
+                    <span>{user?.credits ?? 0}</span>
+                  </div>
+                </div>
                 <button onClick={handleLogout} className={`${navLinkClass} p-2`} aria-label="Cerrar Sesión">
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -130,6 +136,10 @@ export default function Navbar() {
                 <Link href="/perfil" className="block px-3 py-2 text-text hover:text-primary rounded-md">
                   Mi Perfil
                 </Link>
+                <div className="px-3 py-2 flex items-center gap-2 text-primary">
+                  <Star className="w-4 h-4" />
+                  <span>{user?.credits ?? 0} créditos</span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="block px-3 py-2 text-text hover:text-primary rounded-md flex items-center gap-2"

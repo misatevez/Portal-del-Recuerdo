@@ -5,23 +5,30 @@ import { useRouter } from "next/navigation"
 import { Heart, MessageCircle, Edit, Trash2, Star, Calendar, MapPin, Info } from "lucide-react"
 import { ShareButton } from "../../components/sharing/ShareButton"
 import { CommentSection } from "../../components/tributes/CommentSection"
+import { useAuth } from "../../auth/AuthProvider"
 import { CandleSection } from "../../components/tributes/CandleSection"
 import CandleDialog from "../../components/tributes/CandleDialog"
 import { PhotoGallery } from "../../components/tributes/PhotoGallery"
 import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
 import { supabase } from "../../lib/supabase"
 import toast from "react-hot-toast"
-import type { Tribute, User, Comment, Photo, Candle } from "../../types"
+import type { Tribute as BaseTribute, Comment, Photo, Candle } from "../../types"
+import type { User } from "../../auth/AuthProvider"
+
+// Extend the base Tribute type to include our new property
+interface Tribute extends BaseTribute {
+  is_featured?: boolean;
+}
 
 interface TributeContentProps {
   tribute: Tribute
-  user: User | null
+  // user prop is removed, will be consumed from useAuth hook
   candles: Candle[]
   photos: Photo[]
   comments: Comment[]
 }
 
-export function TributeContent({ tribute, user }: TributeContentProps) {
+export function TributeContent({ tribute }: TributeContentProps) {
   const [localComments, setLocalComments] = useState<Comment[]>(tribute.comments || [])
   const [localCandles, setLocalCandles] = useState(tribute.candles || [])
   const [pendingCandles, setPendingCandles] = useState<any[]>([])
@@ -30,6 +37,8 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
   const [isOwner, setIsOwner] = useState(false)
   const [isPremium, setIsPremium] = useState(tribute.is_premium || false)
   const router = useRouter()
+  const { user, setUserCredits } = useAuth()
+  const [isFeatured, setIsFeatured] = useState(tribute.is_featured || false)
   const commentsSectionRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -279,6 +288,40 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
     }
   }
 
+  const handleFeatureTribute = async () => {
+    if (!user || (user.credits ?? 0) < 1) {
+      toast.error("No tienes créditos suficientes para destacar este homenaje.");
+      return;
+    }
+    if (isFeatured) {
+      toast.error("Este homenaje ya ha sido destacado.");
+      return;
+    }
+
+    if (window.confirm(`¿Estás seguro de que quieres usar 1 crédito para destacar este homenaje? Te quedarán ${(user.credits ?? 0) - 1} créditos.`)) {
+      try {
+        const { error } = await supabase.rpc('feature_tribute_with_credit', {
+          tribute_id_in: tribute.id
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        setIsFeatured(true);
+        if (user.credits && setUserCredits) {
+          setUserCredits(user.credits - 1);
+        }
+
+        toast.success("¡Homenaje destacado con éxito!");
+
+      } catch (error: any) {
+        console.error("Error al destacar el homenaje:", error);
+        toast.error(error.message || "No se pudo destacar el homenaje.");
+      }
+    }
+  };
+
   const handleTogglePremium = async () => {
     // TODO: Implement premium status toggle logic
     console.log("Toggle premium status")
@@ -302,7 +345,14 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
             />
           </div>
           <div>
-            <h1 className="text-3xl font-andika text-primary mb-2">{tribute.nombre}</h1>
+            <h1 className="text-3xl font-andika text-primary mb-2 flex items-center gap-2">
+            {tribute.nombre}
+            {isFeatured && (
+              <div className="p-1 bg-yellow-400/20 rounded-full" title="Homenaje Destacado">
+                <Star className="w-5 h-5 text-yellow-500" />
+              </div>
+            )}
+          </h1>
             <div className="flex items-center gap-4 text-text/60 font-montserrat">
               <span className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
@@ -328,13 +378,17 @@ export function TributeContent({ tribute, user }: TributeContentProps) {
               <button onClick={handleDelete} className="text-red-500 hover:text-red-700" aria-label="Delete tribute">
                 <Trash2 className="w-5 h-5" />
               </button>
-              <button
-                onClick={handleTogglePremium}
-                className="text-text/60 hover:text-primary"
-                aria-label="Toggle premium status"
-              >
-                <Star className="w-5 h-5" />
-              </button>
+              {!isFeatured && (
+                <button
+                  onClick={handleFeatureTribute}
+                  className="text-yellow-500 hover:text-yellow-400 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  aria-label="Destacar homenaje"
+                  disabled={!user || (user.credits ?? 0) < 1}
+                  title={user && (user.credits ?? 0) > 0 ? "Destacar con 1 crédito" : "No tienes créditos suficientes"}
+                >
+                  <Star className="w-5 h-5" />
+                </button>
+              )}
             </>
           )}
         </div>

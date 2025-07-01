@@ -4,7 +4,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useRouter } from "next/navigation"
 import type { Session } from "@supabase/supabase-js"
 import { supabase } from "../lib/supabase"
-import type { User } from "../types"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
+
+export interface User extends SupabaseUser {
+  credits?: number
+}
 
 type AuthContextType = {
   user: User | null
@@ -36,9 +40,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setLoading(true)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
+        if (session?.user) {
+          // Fetch profile to get credits
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('credits')
+            .eq('id', session.user.id)
+            .single()
+
+          const userWithCredits: User = {
+            ...session.user,
+            credits: profile?.credits ?? 0,
+          }
+          setUser(userWithCredits)
+        } else {
+          setUser(null)
+        }
         setSession(session)
-        setUser(session?.user ?? null)
         setLoading(false)
       }
     )
@@ -68,7 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error
       }
     },
-    setUserCredits,
+    setUserCredits: (credits: number) => {
+      if (user) {
+        setUser({ ...user, credits })
+      }
+    },
     loading,
   }
 
