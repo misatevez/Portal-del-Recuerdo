@@ -34,14 +34,16 @@ export default function Navbar() {
 
       // Fetch credits
       try {
-        const { count, error } = await supabase
-          .from('user_credits')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .is('used_at', null)
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single();
 
-        if (error) throw error
-        setCredits(count ?? 0)
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+        setCredits(data?.credits ?? 0);
       } catch (err) {
         console.error("Error fetching credits:", err)
         setCredits(0)
