@@ -23,15 +23,21 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      // **CORRECCIÓN CRÍTICA: Añadir credentials: 'include' para enviar cookies**
-      const response = await fetch('/api/users/list', { credentials: 'include' })
+      // **CORRECCIÓN: Apuntar al endpoint consolidado y seguro**
+      const response = await fetch('/api/users', { credentials: 'include' })
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar los usuarios.')
+        // El endpoint ahora devuelve un array vacío en lugar de un objeto con 'users'
+        if (Array.isArray(data)) {
+          setUsers(data)
+        } else {
+          throw new Error(data.error || 'Error al cargar los usuarios.')
+        }
+      } else {
+        setUsers(data)
       }
-      
-      setUsers(data)
+
     } catch (error: any) {
       toast.error(`Error al cargar usuarios: ${error.message}`)
       console.error('Error fetching users:', error)
@@ -55,7 +61,6 @@ export default function UsersPage() {
     const toastId = toast.loading('Asignando créditos...')
 
     try {
-      // **CORRECCIÓN CRÍTICA: Añadir credentials: 'include' para enviar cookies**
       const response = await fetch('/api/users/assign-credits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

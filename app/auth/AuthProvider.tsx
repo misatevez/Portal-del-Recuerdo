@@ -1,116 +1,51 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
-import type { Session } from "@supabase/supabase-js"
-import { supabase } from "../lib/supabase"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
+import { createContext, useContext, useEffect, useState } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation' // Importante: usar 'next/navigation' en App Router
 
-export interface User extends SupabaseUser {
-  credits?: number
-}
+import type { SupabaseClient, Session } from '@supabase/auth-helpers-nextjs'
 
-type AuthContextType = {
-  user: User | null
+type SupabaseContext = {
+  supabase: SupabaseClient
   session: Session | null
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
-  signOut: () => Promise<void>
-  setUserCredits: (credits: number) => void
-  loading: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  setUserCredits: () => {},
-  loading: true,
-})
+const Context = createContext<SupabaseContext | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [userCredits, setUserCredits] = useState<number>(0)
+export default function AuthProvider({ children, session }: { children: React.ReactNode; session: Session | null }) {
+  const supabase = createClientComponentClient()
   const router = useRouter()
 
+  // Este useEffect es el corazón de la solución.
+  // Escucha cualquier cambio en el estado de autenticación (SIGNED_IN, SIGNED_OUT).
   useEffect(() => {
-    setLoading(true)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          // Fetch profile to get credits
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('credits')
-            .eq('id', session.user.id)
-            .single()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Cuando hay un cambio, no solo actualizamos el estado local, sino que
+      // refrescamos el router. Esto le dice a Next.js que vuelva a ejecutar
+      // las Server Components y los Route Handlers con la nueva información de sesión.
+      // Esto es lo que sincroniza el cliente y el servidor.
+      router.refresh()
+    })
 
-          const userWithCredits: User = {
-            ...session.user,
-            credits: profile?.credits ?? 0,
-          }
-          setUser(userWithCredits)
-        } else {
-          setUser(null)
-        }
-        setSession(session)
-        setLoading(false)
-      }
-    )
-
+    // Nos aseguramos de limpiar la suscripción cuando el componente se desmonta.
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [router, supabase.auth])
 
-  const value = {
-    session,
-    user,
-    signIn: async (email: string, password: string) => {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-    },
-    signUp: async (email: string, password: string) => {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) throw error
-    },
-    signOut: async () => {
-      try {
-        await supabase.auth.signOut()
-        router.push("/")
-      } catch (error) {
-        console.error("Signout error:", error)
-        throw error
-      }
-    },
-    setUserCredits: (credits: number) => {
-      if (user) {
-        setUser({ ...user, credits })
-      }
-    },
-    loading,
-  }
-
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>
+  return (
+    <Context.Provider value={{ supabase, session }}>
+      {children}
+    </Context.Provider>
+  )
 }
 
-export const useAuth = () => {
-  const context = useContext(AuthContext)
+// Hook personalizado para acceder fácilmente al contexto en otros componentes.
+export const useSupabase = () => {
+  const context = useContext(Context)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useSupabase debe ser usado dentro de un AuthProvider.')
   }
   return context
 }
-
-export const useAuthenticatedUser = () => {
-  const { user } = useAuth()
-  if (!user) {
-    throw new Error("User is not authenticated")
-  }
-  return user
-}
-

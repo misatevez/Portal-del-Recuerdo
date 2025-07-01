@@ -1,49 +1,45 @@
-import "./globals.css"
-import type { Metadata } from "next"
-import { Andika, Montserrat_Alternates } from "next/font/google"
-import Navbar from "./components/Navbar"
-import { Footer } from "./components/Footer"
-import { AuthProvider } from "./auth/AuthProvider"
-import type React from "react"
+import './globals.css'
+import { Toaster } from 'react-hot-toast'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
-const andika = Andika({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-andika",
-})
+import AuthProvider from './auth/AuthProvider'
+import Navbar from './components/Navbar' // Importación por defecto
+import { Footer } from './components/Footer' // Importación nombrada
 
-const montserratAlternates = Montserrat_Alternates({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-montserrat-alternates",
-})
 
-export const metadata: Metadata = {
-  title: "Portal del Recuerdo",
-  description: "Un espacio digital para honrar la memoria de nuestros seres queridos",
-  generator: "v0.dev",
-}
 
-export default function RootLayout({
+// Esta línea es importante para evitar que Next.js cachee esta ruta de forma estática,
+// asegurando que la sesión siempre se verifique en cada petición.
+export const dynamic = 'force-dynamic'
+
+export default async function RootLayout({
   children,
-}: {
-  children: React.ReactNode
+}: { 
+  children: React.ReactNode 
 }) {
+  // Creamos un cliente de Supabase en el servidor.
+    // Usamos <any> temporalmente porque el archivo de tipos de la DB no se encuentra.
+  // La solución ideal es generar el archivo de tipos con la CLI de Supabase.
+  const supabase = createServerComponentClient<any>({ cookies })
+  
+  // Obtenemos la sesión del usuario directamente desde el servidor.
+  const { data: { session } } = await supabase.auth.getSession()
+
   return (
-    <html lang="es" className={`${andika.variable} ${montserratAlternates.variable}`}>
-      <body className={`min-h-screen bg-background text-text flex flex-col`}>
-        <AuthProvider>
+    <html lang="es">
+      <body>
+        <Toaster />
+        {/* 
+          Envolvemos toda la aplicación en el AuthProvider y le pasamos 
+          la sesión que obtuvimos en el servidor. Esto es crucial.
+        */}
+        <AuthProvider session={session}>
           <Navbar />
-          <main className="flex-grow pt-20">{children}</main>
+          {children}
           <Footer />
         </AuthProvider>
       </body>
     </html>
   )
 }
-
-import "./globals.css"
-
-
-
-import './globals.css'
