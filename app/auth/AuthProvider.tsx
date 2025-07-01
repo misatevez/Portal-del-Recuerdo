@@ -13,18 +13,19 @@ type SupabaseContext = {
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
 
-export default function AuthProvider({ children, session }: { children: React.ReactNode; session: Session | null }) {
+export default function AuthProvider({ children, session: serverSession }: { children: React.ReactNode; session: Session | null }) {
   const supabase = createClientComponentClient()
   const router = useRouter()
+  const [session, setSession] = useState(serverSession)
 
   // Este useEffect es el corazón de la solución.
   // Escucha cualquier cambio en el estado de autenticación (SIGNED_IN, SIGNED_OUT).
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Cuando hay un cambio, no solo actualizamos el estado local, sino que
-      // refrescamos el router. Esto le dice a Next.js que vuelva a ejecutar
-      // las Server Components y los Route Handlers con la nueva información de sesión.
-      // Esto es lo que sincroniza el cliente y el servidor.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      // Actualizamos el estado de la sesión en el cliente inmediatamente.
+      setSession(newSession)
+
+      // Refrescamos el router para sincronizar los Server Components.
       router.refresh()
     })
 
