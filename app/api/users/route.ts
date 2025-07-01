@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     // 5.2: Obtener todos los perfiles de `public.profiles`.
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, credits, is_banned, privacidad, role');
+      .select('id, nombre, credits, is_banned, privacidad, role');
     if (profilesError) {
       console.error('Error al obtener los perfiles:', profilesError);
       throw profilesError;
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
       return {
         id: user.id,
         email: user.email || null,
-        full_name: profile?.full_name || null,
+        full_name: profile?.nombre || null,
         credits: profile?.credits ?? 0,
         is_banned: profile?.is_banned ?? false,
         privacidad: profile?.privacidad || 'private',
