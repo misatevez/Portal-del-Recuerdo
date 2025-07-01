@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { useSupabase } from '@/app/auth/AuthProvider'
 import toast from 'react-hot-toast'
 import { Ban, Trash2, CheckCircle, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,12 +20,24 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [creditAmounts, setCreditAmounts] = useState<{ [key: string]: number }>({})
+  const { session } = useSupabase()
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       // **CORRECCIÓN: Apuntar al endpoint consolidado y seguro**
-      const response = await fetch('/api/users', { credentials: 'include' })
+      const token = session?.access_token
+      if (!token) {
+        toast.error('No estás autenticado.')
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
       const data = await response.json()
 
       if (!response.ok) {
@@ -45,11 +58,13 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session])
 
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    if (session) {
+      fetchUsers()
+    }
+  }, [session, fetchUsers])
 
   const handleAssignCredits = async (userId: string) => {
     const amount = creditAmounts[userId]
@@ -61,11 +76,19 @@ export default function UsersPage() {
     const toastId = toast.loading('Asignando créditos...')
 
     try {
+      const token = session?.access_token
+      if (!token) {
+        toast.error('No estás autenticado.')
+        return
+      }
+
       const response = await fetch('/api/users/assign-credits', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ userId, amount }),
-        credentials: 'include',
       })
 
       const result = await response.json()
