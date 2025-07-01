@@ -32,31 +32,35 @@ export interface Tribute {
 }
 
 export interface Comment {
-  id: string
-  contenido: string
-  created_at: string
-  user_id: string
-  tribute_id: string
+  id: string;
+  contenido: string;
+  created_at: string;
+  user_id: string;
+  tribute_id: string;
+  estado_check: "pendiente" | "aprobado" | "rechazado";
   profiles: {
-    nombre: string
-  }
+    nombre: string;
+  };
 }
 
 export interface Candle {
-  id: string
-  mensaje?: string
-  user_id: string
-  tribute_id: string
+  id: string;
+  author_name?: string | null;
+  mensaje?: string;
+  user_id: string;
+  tribute_id: string;
   profiles: {
-    nombre: string
-  }
+    nombre: string;
+  };
 }
 
 export interface Photo {
-  id: string
-  url: string
-  descripcion: string
-  tribute_id: string
+  id: string;
+  url: string;
+  descripcion: string;
+  tribute_id: string;
+  created_at: string;
+  user_id: string;
 }
 
 export interface PremiumCredit {

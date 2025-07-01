@@ -1,52 +1,84 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation' // Importante: usar 'next/navigation' en App Router
+import { createContext, useContext, useEffect, useState } from "react"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useRouter } from "next/navigation"
+import type { Session, SupabaseClient, User as SupabaseUser } from "@supabase/auth-helpers-nextjs"
 
-import type { SupabaseClient, Session } from '@supabase/auth-helpers-nextjs'
-
-type SupabaseContext = {
-  supabase: SupabaseClient
-  session: Session | null
+export interface User extends SupabaseUser {
+  nombre?: string
+  credits?: number
 }
 
-const Context = createContext<SupabaseContext | undefined>(undefined)
+type AuthContextType = {
+  user: User | null
+  setUserCredits: (credits: number) => void
+  isLoading: boolean
+  supabase: SupabaseClient
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export default function AuthProvider({ children, session: serverSession }: { children: React.ReactNode; session: Session | null }) {
   const supabase = createClientComponentClient()
   const router = useRouter()
-  const [session, setSession] = useState(serverSession)
 
-  // Este useEffect es el corazón de la solución.
-  // Escucha cualquier cambio en el estado de autenticación (SIGNED_IN, SIGNED_OUT).
+  const [user, setUser] = useState<User | null>(serverSession?.user ?? null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const setUserCredits = (credits: number) => {
+    setUser((currentUser) => {
+      if (!currentUser) return null
+      return { ...currentUser, credits }
+    })
+  }
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      // Actualizamos el estado de la sesión en el cliente inmediatamente.
-      setSession(newSession)
-
-      // Refrescamos el router para sincronizar los Server Components.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
       router.refresh()
     })
 
-    // Nos aseguramos de limpiar la suscripción cuando el componente se desmonta.
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [router, supabase.auth])
 
-  return (
-    <Context.Provider value={{ supabase, session }}>
-      {children}
-    </Context.Provider>
-  )
+  useEffect(() => {
+    if (user?.id) {
+      setIsLoading(true)
+      supabase
+        .from("profiles")
+        .select("nombre, credits")
+        .eq("id", user.id)
+        .single()
+        .then(({ data, error }) => {
+          if (data) {
+            setUser((currentUser) => ({ ...currentUser, ...data }))
+          }
+          if (error && error.code !== "PGRST116") {
+            console.error("Error fetching user profile:", error)
+          }
+          setIsLoading(false)
+        })
+    } else {
+      setIsLoading(false)
+    }
+  }, [user?.id, supabase])
+
+  const value = {
+    user,
+    setUserCredits,
+    isLoading,
+    supabase,
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-// Hook personalizado para acceder fácilmente al contexto en otros componentes.
-export const useSupabase = () => {
-  const context = useContext(Context)
+export const useAuth = () => {
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useSupabase debe ser usado dentro de un AuthProvider.')
+    throw new Error("useAuth must be used within an AuthProvider.")
   }
   return context
 }

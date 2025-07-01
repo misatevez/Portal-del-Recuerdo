@@ -1,22 +1,22 @@
 "use client"
 
 import { useState } from 'react'
-import { Session } from '@supabase/supabase-js'
-import type { Candle as CandleType } from '@/types/database'
+import type { Candle as CandleType } from '../../../types'
 import { CandleDialog } from './CandleDialog'
 import { AnimatedCandle } from '../AnimatedCandle'
 import toast from 'react-hot-toast'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useAuth } from '../../auth/AuthProvider'
 
 interface CandleSectionProps {
   initialCandles: CandleType[]
   tributeId: string
   tributeAuthorId: string
-  session: Session | null
 }
 
-export function CandleSection({ initialCandles, tributeId, tributeAuthorId, session }: CandleSectionProps) {
+export function CandleSection({ initialCandles, tributeId, tributeAuthorId }: CandleSectionProps) {
   const supabase = createClientComponentClient()
+  const { user } = useAuth()
   const [candles, setCandles] = useState<CandleType[]>(initialCandles)
 
   const handleCandleLit = (newCandle: CandleType) => {
@@ -39,16 +39,16 @@ export function CandleSection({ initialCandles, tributeId, tributeAuthorId, sess
     }
   }
 
-  const isTributeOwner = session?.user?.id === tributeAuthorId
+  const isTributeOwner = user?.id === tributeAuthorId
 
   return (
     <section className="bg-white/50 dark:bg-gray-800/50 p-4 sm:p-6 rounded-lg shadow-md backdrop-blur-sm mt-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 font-serif">Velas Encendidas</h3>
-        {session && (
+        {user && (
           <CandleDialog
             tributeId={tributeId}
-            userId={session.user.id}
+            userId={user.id}
             onCandleLit={handleCandleLit}
           />
         )}

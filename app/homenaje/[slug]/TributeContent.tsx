@@ -7,12 +7,12 @@ import { ShareButton } from "../../components/sharing/ShareButton"
 import { CommentSection } from "../../components/tributes/CommentSection"
 import { useAuth } from "../../auth/AuthProvider"
 import { CandleSection } from "../../components/tributes/CandleSection"
-import CandleDialog from "../../components/tributes/CandleDialog"
+
 import { PhotoGallery } from "../../components/tributes/PhotoGallery"
 import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
 import { supabase } from "../../lib/supabase"
 import toast from "react-hot-toast"
-import type { Tribute as BaseTribute, Comment, Photo, Candle } from "../../types"
+import type { Tribute as BaseTribute, Comment, Photo, Candle } from "../../../types"
 import type { User } from "../../auth/AuthProvider"
 
 // Extend the base Tribute type to include our new property
@@ -22,96 +22,24 @@ interface Tribute extends BaseTribute {
 
 interface TributeContentProps {
   tribute: Tribute
-  // user prop is removed, will be consumed from useAuth hook
   candles: Candle[]
   photos: Photo[]
   comments: Comment[]
 }
 
-export function TributeContent({ tribute }: TributeContentProps) {
-  const [localComments, setLocalComments] = useState<Comment[]>(tribute.comments || [])
-  const [localCandles, setLocalCandles] = useState(tribute.candles || [])
-  const [pendingCandles, setPendingCandles] = useState<any[]>([])
-  const [localPhotos, setLocalPhotos] = useState<Photo[]>(tribute.photos || [])
-  const [showCandleDialog, setShowCandleDialog] = useState(false)
+export function TributeContent({ tribute, candles: initialCandles, photos, comments }: TributeContentProps) {
+  const [localComments, setLocalComments] = useState<Comment[]>(comments || [])
+  const [localPhotos, setLocalPhotos] = useState<Photo[]>(photos || [])
   const [isOwner, setIsOwner] = useState(false)
-  const [isPremium, setIsPremium] = useState(tribute.is_premium || false)
+  const [isPremium, setIsPremium] = useState(tribute.es_premium || false)
   const router = useRouter()
   const { user, setUserCredits } = useAuth()
   const [isFeatured, setIsFeatured] = useState(tribute.is_featured || false)
   const commentsSectionRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+    useEffect(() => {
     setIsOwner(user?.id === tribute.created_by)
   }, [user, tribute.created_by])
-
-  // Cargar velas pendientes cuando el usuario es propietario
-  useEffect(() => {
-    if (isOwner && user) {
-      const loadPendingCandles = async () => {
-        try {
-          console.log("Cargando velas pendientes para el homenaje:", tribute.id);
-          
-          // Consulta explícita para velas pendientes
-          const { data, error } = await supabase
-            .from("candles")
-            .select("*, profiles:user_id(nombre)")
-            .eq("tribute_id", tribute.id)
-            .eq("estado", "pendiente");
-            
-          if (error) throw error;
-          
-          console.log("Velas pendientes encontradas:", data?.length || 0);
-          console.log("Datos de velas pendientes:", data);
-          
-          if (data && data.length > 0) {
-            // Actualizar directamente el estado de candles con las velas pendientes
-            setLocalCandles(prevCandles => {
-              // Crear un mapa de IDs existentes para evitar duplicados
-              const existingIds = new Set(prevCandles.map((c: Candle) => c.id));
-              // Filtrar solo las velas nuevas
-              const newCandles = data.filter((c: Candle) => !existingIds.has(c.id));
-              console.log("Nuevas velas a agregar:", newCandles.length);
-              return [...prevCandles, ...newCandles];
-            });
-          }
-        } catch (error) {
-          console.error("Error al cargar velas pendientes:", error);
-        }
-      };
-      
-      loadPendingCandles();
-    }
-  }, [isOwner, user, tribute.id]);
-
-  // Modificar el useEffect que carga las velas pendientes
-  useEffect(() => {
-    // Cargar todas las velas del homenaje, no solo las pendientes
-    const loadCandles = async () => {
-      try {
-        console.log("Cargando velas para el homenaje:", tribute.id);
-        
-        const { data, error } = await supabase
-          .from("candles")
-          .select("*, profiles:user_id(nombre)")
-          .eq("tribute_id", tribute.id);
-            
-        if (error) throw error;
-        
-        console.log("Velas encontradas:", data?.length || 0);
-        console.log("Datos de velas:", data);
-        
-        if (data && data.length > 0) {
-          // Reemplazar completamente el estado de velas con los datos actualizados
-          setLocalCandles(data);
-        }
-      } catch (error) {
-        console.error("Error al cargar velas:", error);
-      }
-    };
-    
-    loadCandles();
-  }, [tribute.id]); // Solo depende del ID del homenaje, no del usuario o isOwner
 
   // Añadir un nuevo useEffect para cargar todos los comentarios
   useEffect(() => {
@@ -165,31 +93,7 @@ export function TributeContent({ tribute }: TributeContentProps) {
     })
   }
 
-  const handleLightCandle = () => {
-    if (!user) {
-      toast.error("Debes iniciar sesión para encender una vela", {
-        duration: 3000,
-      })
-      router.push("/login")
-      return
-    }
-    setShowCandleDialog(true)
-  }
-
-  const handleCandleLit = (newCandle: any) => {
-    // Agregar la vela a la lista de velas pendientes
-    setPendingCandles((prev) => [...prev, newCandle])
-    
-    // Si el usuario es el propietario del homenaje, también agregar a las velas
-    if (isOwner) {
-      setLocalCandles((prevCandles) => {
-        // Verificar si la vela ya existe en el estado para evitar duplicados
-        const exists = prevCandles.some(c => c.id === newCandle.id)
-        if (exists) return prevCandles
-        return [...prevCandles, newCandle]
-      })
-    }
-  }
+  
 
   const handleScrollToComments = () => {
     commentsSectionRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -328,9 +232,7 @@ export function TributeContent({ tribute }: TributeContentProps) {
   }
 
   // Añadir función para manejar la eliminación de velas
-  const handleCandleDelete = (candleId: string) => {
-    setLocalCandles(prevCandles => prevCandles.filter(candle => candle.id !== candleId))
-  }
+  
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -399,15 +301,16 @@ export function TributeContent({ tribute }: TributeContentProps) {
         <p className="text-text/80 font-montserrat">{tribute.biografia}</p>
       </div>
 
+      {/* Candle Section */}
+      <CandleSection 
+        initialCandles={initialCandles}
+        tributeId={tribute.id}
+        tributeAuthorId={tribute.created_by}
+      />
+
       {/* Tribute Actions */}
       <div className="flex flex-wrap gap-4 mb-12">
-        <button
-          onClick={handleLightCandle}
-          className="elegant-button flex items-center gap-2 px-4 py-2 rounded-md"
-        >
-          <Heart className="w-5 h-5" />
-          Encender Vela
-        </button>
+
         <button
           onClick={handleScrollToComments}
           className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-text rounded-md hover:bg-primary/10"
@@ -417,15 +320,7 @@ export function TributeContent({ tribute }: TributeContentProps) {
         </button>
       </div>
 
-      {/* Candle Section */}
-      <CandleSection 
-        candles={localCandles} 
-        pendingCandles={pendingCandles}
-        tributeId={tribute.id} 
-        isOwner={isOwner} 
-        currentUser={user}
-        onCandleDeleted={handleCandleDelete}
-      />
+
 
       {/* Photo Gallery */}
       {(isOwner || isPremium) && (
@@ -472,9 +367,7 @@ export function TributeContent({ tribute }: TributeContentProps) {
         />
       </div>
 
-      {showCandleDialog && (
-        <CandleDialog onClose={() => setShowCandleDialog(false)} tributeId={tribute.id} onCandleLit={handleCandleLit} />
-      )}
+
     </div>
   )
 }
