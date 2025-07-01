@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Ban, Trash2, CheckCircle, UserPlus } from 'lucide-react'
-import { Button } from '@/components/ui/button' // Asumiendo que usas shadcn/ui
+import { Button } from '@/components/ui/button'
 
 type UserProfile = {
   id: string
@@ -23,7 +23,8 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/users/list')
+      // **CORRECCIÓN CRÍTICA: Añadir credentials: 'include' para enviar cookies**
+      const response = await fetch('/api/users/list', { credentials: 'include' })
       const data = await response.json()
 
       if (!response.ok) {
@@ -54,10 +55,12 @@ export default function UsersPage() {
     const toastId = toast.loading('Asignando créditos...')
 
     try {
+      // **CORRECCIÓN CRÍTICA: Añadir credentials: 'include' para enviar cookies**
       const response = await fetch('/api/users/assign-credits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, amount }),
+        credentials: 'include',
       })
 
       const result = await response.json()
