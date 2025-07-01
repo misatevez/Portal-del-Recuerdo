@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { supabase } from "../../lib/supabase"
 import { supabaseAdmin } from "../../lib/supabaseAdmin"
-import { Search, Shield, Trash2, Check, X, Ban, UserCheck } from "lucide-react"
+import { Search, Shield, Trash2, Check, X, Ban, UserCheck, Star, PlusCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog"
 
@@ -15,6 +15,7 @@ export default function UsersPage() {
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
   const [userToBan, setUserToBan] = useState<{id: string, isBanned: boolean} | null>(null)
+  const [creditsToAdd, setCreditsToAdd] = useState<{ [key: string]: string }>({});
   const [activeTable, setActiveTable] = useState<'profiles' | 'usuarios'>('profiles')
   
   useEffect(() => {
@@ -177,6 +178,43 @@ export default function UsersPage() {
   }
   
   // Función para determinar si un usuario está baneado
+    const handleCreditChange = (userId: string, value: string) => {
+    setCreditsToAdd(prev => ({ ...prev, [userId]: value }));
+  };
+
+  const handleAssignCredits = async (userId: string) => {
+    const amount = parseInt(creditsToAdd[userId] || '0', 10);
+    if (amount <= 0) {
+      toast.error("Por favor, introduce una cantidad positiva de créditos.");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users/assign-credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al asignar créditos');
+      }
+
+      // Update UI
+      setUsers(users.map(user =>
+        user.id === userId ? { ...user, credits: (user.credits || 0) + amount } : user
+      ));
+      setCreditsToAdd(prev => ({ ...prev, [userId]: '' })); // Clear input
+      toast.success('Créditos asignados correctamente');
+
+    } catch (error: any) {
+      console.error('Error al asignar créditos:', error);
+      toast.error(error.message || 'No se pudieron asignar los créditos.');
+    }
+  };
+
   const isUserBanned = (user: any) => {
     if (activeTable === 'profiles') {
       return user.is_banned === true;
@@ -242,12 +280,23 @@ export default function UsersPage() {
                     Fecha de registro
                   </th>
                   {activeTable === 'profiles' && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
-                      Privacidad
-                    </th>
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
+                        Privacidad
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
+                        Rol
+                      </th>
+                    </>
                   )}
                   <th className="px-6 py-3 text-left text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
+                    Créditos
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
                     Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
+                    Asignar Créditos
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-text/80 uppercase tracking-wider font-montserrat">
                     Acciones
@@ -275,16 +324,33 @@ export default function UsersPage() {
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Desconocida'}
                     </td>
                     {activeTable === 'profiles' && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text/80 font-montserrat">
-                        <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
-                          user.privacidad === 'private' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {user.privacidad === 'private' ? 'Privado' : 'Público'}
-                        </span>
-                      </td>
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text/80 font-montserrat">
+                          <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
+                            user.privacidad === 'private' 
+                              ? 'bg-red-100 text-red-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {user.privacidad === 'private' ? 'Privado' : 'Público'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text/80 font-montserrat">
+                          <span className={`px-2 py-1 text-xs rounded-full font-montserrat font-semibold ${
+                            user.role === 'admin' 
+                              ? 'bg-accent/20 text-accent'
+                              : 'bg-primary/10 text-primary/80'
+                          }`}>
+                            {user.role || 'user'}
+                          </span>
+                        </td>
+                      </>
                     )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text/80 font-montserrat">
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                        {user.credits || 0}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-montserrat">
                       <div className="space-y-1">
                         <div className="text-text/80">
@@ -299,6 +365,25 @@ export default function UsersPage() {
                             Bloqueado
                           </div>
                         )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Cant."
+                          value={creditsToAdd[user.id] || ''}
+                          onChange={(e) => handleCreditChange(user.id, e.target.value)}
+                          className="w-20 px-2 py-1 rounded-md border border-primary/20 bg-surface focus:outline-none focus:ring-1 focus:ring-primary/30 font-montserrat text-sm"
+                        />
+                        <button
+                          onClick={() => handleAssignCredits(user.id)}
+                          className="ml-2 elegant-action-button"
+                          title="Asignar créditos"
+                        >
+                          <PlusCircle className="w-4 h-4 text-green-600" />
+                        </button>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
