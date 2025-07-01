@@ -35,11 +35,12 @@ export async function GET(request: Request) {
   // Paso 5: Si el usuario es un administrador autorizado, obtener los datos de forma segura.
   try {
     // 5.1: Obtener todos los usuarios de `auth.users`.
-    const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-    if (usersError) {
-      console.error('Error al obtener la lista de usuarios de auth:', usersError);
-      throw usersError;
+    const { data, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+    if (usersError || !data) {
+      console.error('Error al obtener los usuarios:', usersError);
+      throw usersError || new Error('No se pudieron obtener los datos de los usuarios.');
     }
+    const { users } = data;
 
     // 5.2: Obtener todos los perfiles de `public.profiles`.
     const { data: profiles, error: profilesError } = await supabaseAdmin
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
     }
 
     // 5.3: Crear un mapa de perfiles para una búsqueda eficiente.
-    const profilesMap = new Map(profiles.map(p => [p.id, p]));
+    const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
 
     // 5.4: Combinar los datos de usuarios y perfiles.
     const combinedData = users.map(user => {
@@ -69,12 +70,16 @@ export async function GET(request: Request) {
     });
 
     // 5.5: Ordenar los datos combinados por fecha de creación.
-    const sortedData = combinedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const sortedData = combinedData.sort((a, b) => {
+      const timeA = new Date(a.created_at || 0).getTime();
+      const timeB = new Date(b.created_at || 0).getTime();
+      return timeB - timeA;
+    });
 
     return NextResponse.json(sortedData);
 
   } catch (error: any) {
-    console.error('Error final en el endpoint de listar usuarios:', error.message);
+        console.error('Error detallado en el endpoint de listar usuarios:', error);
     return NextResponse.json({ error: 'Ocurrió un error inesperado al listar usuarios.' }, { status: 500 });
   }
 }
