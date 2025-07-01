@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ProfileContent } from "./ProfileContent"
-import { AuthProvider } from "../auth/AuthProvider"
+
 import { supabase } from "../lib/supabase"
 
 export default function ProfilePage() {
@@ -42,13 +42,11 @@ export default function ProfilePage() {
   if (loading || !data) return null
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-surface pt-20">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <ProfileContent {...data} />
-        </div>
+    <div className="min-h-screen bg-surface pt-20">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <ProfileContent {...data} />
       </div>
-    </AuthProvider>
+    </div>
   )
 }
 
