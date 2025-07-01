@@ -32,54 +32,32 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Acción no permitida. Se requiere rol de administrador.' }, { status: 403 })
   }
 
-  // Paso 5: Si el usuario es un administrador autorizado, obtener los datos de forma segura.
+  // Paso 5: Si el usuario es un administrador autorizado, obtener los datos y devolverlos en crudo.
   try {
-    // 5.1: Obtener todos los usuarios de `auth.users`.
-    const { data, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-    if (usersError || !data) {
-      console.error('Error al obtener los usuarios:', usersError);
-      throw usersError || new Error('No se pudieron obtener los datos de los usuarios.');
+    // 5.1: Obtener la lista de usuarios de `auth.users`.
+    const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+    if (usersError || !usersData) {
+      console.error('Error al obtener la lista de usuarios:', usersError);
+      return NextResponse.json({ error: 'Error al obtener la lista de usuarios.' }, { status: 500 });
     }
-    const { users } = data;
 
-    // 5.2: Obtener todos los perfiles de `public.profiles`.
+    // 5.2: Obtener la lista de perfiles de `public.profiles`.
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, nombre, credits, is_banned, privacidad, role');
+      .select('id, nombre, credits, privacidad, role');
     if (profilesError) {
       console.error('Error al obtener los perfiles:', profilesError);
-      throw profilesError;
+      return NextResponse.json({ error: 'Error al obtener los perfiles.' }, { status: 500 });
     }
 
-    // 5.3: Crear un mapa de perfiles para una búsqueda eficiente.
-    const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
-
-    // 5.4: Combinar los datos de usuarios y perfiles.
-    const combinedData = users.map(user => {
-      const profile = profilesMap.get(user.id);
-      return {
-        id: user.id,
-        email: user.email || null,
-        full_name: profile?.nombre || null,
-        credits: profile?.credits ?? 0,
-        is_banned: profile?.is_banned ?? false,
-        privacidad: profile?.privacidad || 'private',
-        role: profile?.role || 'user',
-        created_at: user.created_at, // Incluir para ordenar
-      };
+    // 5.3: Devolver ambas listas al cliente para que las procese.
+    return NextResponse.json({
+      users: usersData.users,
+      profiles: profiles || [],
     });
-
-    // 5.5: Ordenar los datos combinados por fecha de creación.
-        const sortedData = combinedData.sort((a, b) => {
-      const timeA = new Date(a.created_at || 0).getTime();
-      const timeB = new Date(b.created_at || 0).getTime();
-      return timeB - timeA;
-    });
-
-    return NextResponse.json(sortedData);
 
   } catch (error: any) {
-        console.error('Error detallado en el endpoint de listar usuarios:', error);
+    console.error('Error detallado en el endpoint de listar usuarios:', error);
     return NextResponse.json({ error: 'Ocurrió un error inesperado al listar usuarios.' }, { status: 500 });
   }
 }

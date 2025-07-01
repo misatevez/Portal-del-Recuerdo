@@ -7,58 +7,95 @@ import { Ban, Trash2, CheckCircle, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type UserProfile = {
-  id: string
-  email: string | null
-  full_name: string | null
-  credits: number
-  is_banned: boolean
-  privacidad: 'public' | 'private'
-  role: 'admin' | 'user'
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  credits: number;
+  privacidad: 'public' | 'private';
+  role: 'admin' | 'user';
+  created_at: string;
 }
 
+// Tipos para los datos crudos que vienen de la API
+type RawUser = {
+  id: string;
+  email?: string;
+  created_at: string;
+};
+
+type Profile = {
+  id: string;
+  nombre: string | null;
+  credits: number;
+  privacidad: 'public' | 'private';
+  role: 'admin' | 'user';
+};
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<UserProfile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [creditAmounts, setCreditAmounts] = useState<{ [key: string]: number }>({})
-  const { session } = useSupabase()
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creditAmounts, setCreditAmounts] = useState<{ [key: string]: number }>({});
+  const { session } = useSupabase();
 
   const fetchUsers = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      // **CORRECCIÓN: Apuntar al endpoint consolidado y seguro**
-      const token = session?.access_token
+      const token = session?.access_token;
       if (!token) {
-        toast.error('No estás autenticado.')
-        setLoading(false)
-        return
+        toast.error('No estás autenticado.');
+        setLoading(false);
+        return;
       }
 
       const response = await fetch('/api/users', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      })
-      const data = await response.json()
+      });
+      const data = await response.json();
 
       if (!response.ok) {
-        // El endpoint ahora devuelve un array vacío en lugar de un objeto con 'users'
-        if (Array.isArray(data)) {
-          setUsers(data)
-        } else {
-          throw new Error(data.error || 'Error al cargar los usuarios.')
-        }
-      } else {
-        setUsers(data)
+        throw new Error(data.error || 'Error al cargar los datos desde la API.');
       }
 
+      // Se asignan tipos a los datos recibidos para mayor seguridad.
+      const { users: rawUsers, profiles }: { users: RawUser[]; profiles: Profile[] } = data;
+
+      // Se crea un mapa de perfiles para una búsqueda eficiente.
+      const profilesMap = new Map<string, Profile>(profiles.map((p) => [p.id, p]));
+
+      // Se combinan los datos de usuarios y perfiles en el cliente.
+      const combinedData: UserProfile[] = rawUsers.map((user) => {
+        const profile = profilesMap.get(user.id);
+        return {
+          id: user.id,
+          email: user.email || null,
+          full_name: profile?.nombre || null,
+          credits: profile?.credits ?? 0,
+          
+          privacidad: profile?.privacidad || 'private',
+          role: profile?.role || 'user',
+          created_at: user.created_at,
+        };
+      });
+
+      // Se ordenan los datos en el cliente.
+      const sortedData = combinedData.sort((a, b) => {
+        const timeA = new Date(a.created_at || 0).getTime();
+        const timeB = new Date(b.created_at || 0).getTime();
+        return timeB - timeA;
+      });
+
+      setUsers(sortedData);
+
     } catch (error: any) {
-      toast.error(`Error al cargar usuarios: ${error.message}`)
-      console.error('Error fetching users:', error)
-      setUsers([])
+      toast.error(`Error al procesar usuarios: ${error.message}`);
+      console.error('Error fetching and processing users:', error);
+      setUsers([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [session])
+  }, [session]);
 
   useEffect(() => {
     if (session) {
@@ -123,7 +160,7 @@ export default function UsersPage() {
                   <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-0">Nombre / Email</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Créditos</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Asignar Créditos</th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Estado</th>
+                  
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Rol</th>
                 </tr>
               </thead>
@@ -149,11 +186,7 @@ export default function UsersPage() {
                         </Button>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.is_banned ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200' : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'}`}>
-                        {user.is_banned ? 'Baneado' : 'Activo'}
-                      </span>
-                    </td>
+                    
                     <td className="whitespace-nowrap px-3 py-4 text-sm">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary/80'}`}>
                         {user.role || 'user'}
