@@ -19,7 +19,7 @@ export default function ProfilePage() {
           supabase.from("profiles").select("*").eq("id", user.id).single(),
           supabase.from("tributes").select("*").eq("created_by", user.id),
           supabase.from("notifications").select("*").eq("user_id", user.id),
-          supabase.from("credits").select("amount").eq("user_id", user.id).single()
+          supabase.from("profiles").select("credits").eq("id", user.id).single()
         ])
 
         setData({
@@ -27,7 +27,7 @@ export default function ProfilePage() {
           profile: profileData.data || { nombre: "", notificaciones: true, privacidad: "public" },
           tributes: tributesData.data || [],
           activity: activityData.data || [],
-          userCredits: creditsData.data?.amount || 0
+          userCredits: creditsData.data?.credits || 0
         })
       } catch (error) {
         console.error(error)

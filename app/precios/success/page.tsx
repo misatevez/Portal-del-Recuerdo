@@ -14,10 +14,25 @@ export default function SuccessPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("No user found")
 
-        await supabase.from("credits").upsert({
-          user_id: user.id,
-          amount: 1
-        })
+        // Primero, obtener los créditos actuales del perfil del usuario
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        const currentCredits = profile?.credits || 0;
+        const newCredits = currentCredits + 1; // Asumiendo que cada compra es de 1 crédito
+
+        // Luego, actualizar el perfil con el nuevo total de créditos
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ credits: newCredits })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
 
         toast.success("¡Compra exitosa! Se ha añadido el crédito a tu cuenta")
         router.push("/perfil")

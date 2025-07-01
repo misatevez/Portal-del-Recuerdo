@@ -33,13 +33,13 @@ export function CreditManager({
   const loadCredits = async () => {
     try {
       const { data, error } = await supabase
-        .from("credits")
-        .select("amount")
-        .eq("user_id", userId)
+        .from("profiles")
+        .select("credits")
+        .eq("id", userId)
         .single()
 
       if (error && error.code !== "PGRST116") throw error
-      setCredits(data?.amount || 0)
+      setCredits(data?.credits || 0)
     } catch (error) {
       console.error("Error loading credits:", error)
     } finally {
@@ -58,11 +58,13 @@ export function CreditManager({
         .update({ is_premium: true })
         .eq("id", tribute.id)
 
-      // Decrementar los créditos del usuario
-      await supabase
-        .from("credits")
-        .update({ amount: credits - 1 })
-        .eq("user_id", userId)
+      // Decrementar los créditos del usuario en la tabla profiles
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ credits: credits - 1 })
+        .eq("id", userId);
+
+      if (updateError) throw updateError;
 
       // Recargar los créditos
       await loadCredits()
