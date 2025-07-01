@@ -12,23 +12,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Datos de entrada inválidos.' }, { status: 400 })
   }
 
-  // 1. Verificación de permisos con el cliente normal
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data: { session } } = await supabase.auth.getSession()
+  // 1. Verificación de permisos del administrador que realiza la acción
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error('[API/ASSIGN-CREDITS] Error: Token no proporcionado o mal formateado.');
+    return NextResponse.json({ error: 'No autorizado. Token no proporcionado o mal formateado.' }, { status: 401 });
+  }
+  const token = authHeader.split(' ')[1];
 
-    if (!session) {
-    console.error('[API/ASSIGN-CREDITS] Error: Intento de asignación de créditos sin sesión de usuario.');
-    return NextResponse.json({ error: 'No autorizado.' }, { status: 401 })
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user: adminUser }, error: userError } = await supabase.auth.getUser(token);
+
+  if (userError || !adminUser) {
+    console.error('[API/ASSIGN-CREDITS] Error: Token de administrador inválido o expirado.');
+    return NextResponse.json({ error: 'No autorizado. Token inválido o expirado.' }, { status: 401 });
   }
 
   const { data: adminProfile, error: adminError } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
-    .single()
+    .eq('id', adminUser.id)
+    .single();
 
     if (adminError || adminProfile?.role !== 'admin') {
-    console.error(`[API/ASSIGN-CREDITS] Error: Usuario ${session?.user?.id} sin permisos de administrador intentó asignar créditos.`);
+        console.error(`[API/ASSIGN-CREDITS] Error: Usuario ${adminUser.id} sin permisos de administrador intentó asignar créditos.`);
     return NextResponse.json({ error: 'Acción no permitida. Se requiere rol de administrador.' }, { status: 403 })
   }
 
