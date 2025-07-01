@@ -18,6 +18,7 @@ interface CandleDialogProps {
 // Changed from 'function CandleDialog' to 'export default function CandleDialog'
 export default function CandleDialog({ onClose, tributeId, onCandleLit }: CandleDialogProps) {
   const [message, setMessage] = useState("")
+  const [authorName, setAuthorName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { user } = useAuth()
 
@@ -34,6 +35,7 @@ export default function CandleDialog({ onClose, tributeId, onCandleLit }: Candle
           user_id: user.id,
           mensaje: message.trim() || null,
           estado: "pendiente", // Establecer estado inicial como pendiente
+          author_name: authorName.trim() || null,
         })
         .select("*, profiles:user_id(nombre)")
         .single()
@@ -78,6 +80,14 @@ export default function CandleDialog({ onClose, tributeId, onCandleLit }: Candle
         </p>
         
         <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="Tu nombre (opcional)"
+            className="elegant-input w-full px-3 py-2 rounded-md font-montserrat mb-4"
+            maxLength={100}
+          />
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}

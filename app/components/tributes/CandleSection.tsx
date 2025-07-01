@@ -184,7 +184,7 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
                 </div>
                 
                 <p className="font-montserrat text-sm mb-1">
-                  {candle.profiles?.nombre || "Anónimo"}
+                  {candle.author_name || candle.profiles?.nombre || "Anónimo"}
                 </p>
                 
                 {candle.mensaje && (
@@ -259,7 +259,7 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
                 <AnimatedCandle />
               </div>
               <p className="font-montserrat text-sm mb-1">
-                {candle.profiles?.nombre || "Anónimo"}
+                {candle.author_name || candle.profiles?.nombre || "Anónimo"}
               </p>
               {candle.mensaje && (
                 <p className="text-text/80 text-sm italic">"{candle.mensaje}"</p>
@@ -283,7 +283,7 @@ export function CandleSection({ candles, pendingCandles = [], tributeId, isOwner
                   <AnimatedCandle />
                 </div>
                 <p className="font-montserrat text-sm mb-1">
-                  {candle.profiles?.nombre || "Anónimo"}
+                  {candle.author_name || candle.profiles?.nombre || "Anónimo"}
                 </p>
                 {candle.mensaje && (
                   <p className="text-text/60 text-sm italic">"{candle.mensaje}"</p>
