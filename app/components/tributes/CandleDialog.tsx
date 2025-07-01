@@ -3,7 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import { X, Heart } from "lucide-react"
+import { X } from "lucide-react"
+import { AnimatedCandle } from "../AnimatedCandle"
 import { supabase } from "../../lib/supabase"
 import { useAuth } from "../../auth/AuthProvider"
 import toast from "react-hot-toast"
@@ -68,7 +69,7 @@ export default function CandleDialog({ onClose, tributeId, onCandleLit }: Candle
         
         <div className="flex justify-center mb-6">
           <div className="p-4 bg-primary/10 rounded-full">
-            <Heart className="w-12 h-12 text-primary" />
+            <AnimatedCandle className="w-12 h-12 text-primary" />
           </div>
         </div>
         
@@ -81,9 +82,13 @@ export default function CandleDialog({ onClose, tributeId, onCandleLit }: Candle
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Escribe un mensaje (opcional)"
-            className="elegant-input w-full px-3 py-2 rounded-md font-montserrat mb-4"
+            className="elegant-input w-full px-3 py-2 rounded-md font-montserrat mb-1"
             rows={4}
+            maxLength={100}
           />
+          <div className="text-right text-xs text-text/60 mb-4">
+            {message.length} / 100
+          </div>
           <div className="flex justify-end">
             <button type="submit" className="elegant-button px-4 py-2 rounded-md font-andika" disabled={isSubmitting}>
               {isSubmitting ? "Encendiendo..." : "Encender Vela"}
