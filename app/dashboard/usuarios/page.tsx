@@ -76,12 +76,17 @@ export default function UsersPage() {
         };
       });
 
-      const sortedData = combinedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const sortedData = combinedData.sort((a, b) => {
+        const timeA = new Date(a.created_at || 0).getTime();
+        const timeB = new Date(b.created_at || 0).getTime();
+        return timeB - timeA;
+      });
 
       setUsers(sortedData);
 
     } catch (error: any) {
-      toast.error(`Error al procesar usuarios: ${error.message}`);
+            toast.error(`Error al procesar usuarios: ${error.message}`);
+      console.error('Error fetching and processing users:', error);
       setUsers([]);
     } finally {
       setLoading(false);
