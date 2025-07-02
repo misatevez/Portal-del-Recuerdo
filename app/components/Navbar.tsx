@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Menu, X, Shield, LogOut, Star } from "lucide-react"
 import { useAuth } from "../auth/AuthProvider"
@@ -11,6 +12,7 @@ export default function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const { user, supabase } = useAuth()
+  const router = useRouter()
   const navLinkClass = "text-text hover:text-primary transition-colors font-andika"
 
   useEffect(() => {
@@ -35,6 +37,8 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
+      router.push('/')
+      router.refresh()
       setMenuAbierto(false) // Close mobile menu after logout
     } catch (error) {
       console.error("Error during logout:", error)
