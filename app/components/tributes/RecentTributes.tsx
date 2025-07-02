@@ -63,7 +63,6 @@ export default function RecentTributes() {
               isOwner={false}
               onEdit={() => {}}
               onDelete={() => {}}
-              onTogglePremium={() => {}}
             />
           ))}
         </div>
