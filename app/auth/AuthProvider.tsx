@@ -39,33 +39,22 @@ export default function AuthProvider({ children, session: serverSession }: { chi
     setUser(serverSession?.user ?? null);
   }, [serverSession]);
 
-  // This is the definitive 3-rule implementation.
+  // This is the simplest, most robust implementation.
+  // It trusts the server as the single source of truth and uses a watchdog
+  // to trigger a re-sync if the client state ever diverges.
   useEffect(() => {
-    console.log('[AuthProvider] Setting up definitive listener.');
+    console.log('[AuthProvider] Setting up simple watchdog listener.');
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, clientSession) => {
-      console.log(`[AuthProvider] Event: ${event}`);
-
-      // Rule 1: Always ignore INITIAL_SESSION on the client to prevent flicker.
-      if (event === 'INITIAL_SESSION') {
-        console.log('[AuthProvider] -> Rule 1: Ignoring INITIAL_SESSION.');
-        return;
-      }
-
-      // Rule 2: Handle SIGNED_IN for a fast UI response.
-      if (event === 'SIGNED_IN') {
-        console.log('[AuthProvider] -> Rule 2: SIGNED_IN detected. Optimistically updating UI and refreshing server data.');
-        setUser(clientSession?.user ?? null);
-        router.refresh();
-      } 
-      // Rule 3: For all other events, act as a watchdog.
-      else if (clientSession?.access_token !== serverSession?.access_token) {
-        console.log(`[AuthProvider] -> Rule 3: Watchdog detected mismatch on event '${event}'. Forcing refresh.`);
+      // The one and only rule: if the client's idea of the session
+      // is different from the server's, the server wins. Force a refresh.
+      if (clientSession?.access_token !== serverSession?.access_token) {
+        console.log(`[AuthProvider] Mismatch detected on event '${event}'. Refreshing to sync with server.`);
         router.refresh();
       }
     });
 
     return () => {
-      console.log('[AuthProvider] Unsubscribing definitive listener.');
+      console.log('[AuthProvider] Unsubscribing watchdog.');
       subscription.unsubscribe();
     };
   }, [router, supabase, serverSession]);

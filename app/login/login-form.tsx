@@ -1,88 +1,29 @@
 "use client"
 
-import type React from "react"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { toast } from "react-hot-toast"
+import { loginWithEmail } from "./actions"
+import { useSearchParams } from 'next/navigation'
+import { AlertCircle, Mail, Lock, Heart } from 'lucide-react'
+import Link from 'next/link'
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Mail, Lock, AlertCircle, Heart } from "lucide-react"
-import { supabase } from "../lib/supabase"
+export default function LoginForm() {
+  const supabase = createClientComponentClient()
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
 
-export function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<React.ReactNode | string>("")
-  const [loading, setLoading] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('[LoginForm] Attempting login with email/password.');
-    setError("");
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('[LoginForm] Supabase auth error:', error.message);
-        if (error.message.includes("Email not confirmed")) {
-          setError(
-            <span>
-              Tu correo electrónico aún no ha sido verificado. Por favor, revisa tu bandeja de entrada y confirma tu cuenta. 
-              Si no lo encuentras, puedes reenviar el correo de verificación{" "}
-              <Link href="/registro/reenviar" className="text-primary underline">
-                aquí
-              </Link>
-            </span>
-          );
-          return;
-        }
-        throw error;
-      }
-
-      console.log('[LoginForm] Login successful. Redirecting to /perfil...');
-      router.push("/perfil");
-      router.refresh();
-    } catch (err: any) {
-      console.error('[LoginForm] Catch block error:', err.message);
-      setError(
-        err.message === "Invalid login credentials"
-          ? "Credenciales de inicio de sesión inválidas"
-          : "Error al iniciar sesión. Por favor, inténtalo de nuevo.",
-      );
-    } finally {
-      console.log('[LoginForm] Login process finished.');
-      setLoading(false);
-    }
-  };
-
-  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+  const handleSocialLogin = async (provider: "google" | "facebook") => {
     console.log(`[LoginForm] Attempting social login with ${provider}.`);
-    setError("");
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) {
-        console.error(`[LoginForm] Social login error with ${provider}:`, error.message);
-        throw error;
-      }
-      console.log(`[LoginForm] Redirecting to ${provider} for authentication.`);
-    } catch (err: any) {
-      console.error(`[LoginForm] Catch block error for ${provider}:`, err.message);
-      setError(`Error al iniciar sesión con ${provider}: ${err.message}`);
-    } finally {
-      console.log(`[LoginForm] Social login process for ${provider} finished.`);
-      setLoading(false);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      console.error(`[LoginForm] Social login error with ${provider}:`, error);
+      toast.error(`Error al iniciar con ${provider}: ${error.message}`);
     }
   };
 
@@ -97,11 +38,11 @@ export function LoginForm() {
         <p className="mt-2 text-text/80 font-montserrat">Bienvenido de nuevo</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="elegant-card p-8 rounded-lg backdrop-blur-md">
-        {error && (
+      <form action={loginWithEmail} className="elegant-card p-8 rounded-lg backdrop-blur-md">
+        {message && (
           <div className="mb-6 p-4 bg-red-900/20 border border-red-500/50 rounded-md flex items-center text-red-200">
             <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
-            <span className="font-montserrat">{error}</span>
+            <span className="font-montserrat">{message}</span>
           </div>
         )}
 
@@ -117,8 +58,7 @@ export function LoginForm() {
               <input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
                 className="elegant-input block w-full pl-10 pr-3 py-2 rounded-md font-montserrat"
                 placeholder="tu@email.com"
                 required
@@ -137,8 +77,7 @@ export function LoginForm() {
               <input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
                 className="elegant-input block w-full pl-10 pr-3 py-2 rounded-md font-montserrat"
                 placeholder="••••••••"
                 required
@@ -150,9 +89,8 @@ export function LoginForm() {
             <div className="flex items-center">
               <input
                 id="remember-me"
+                name="remember-me"
                 type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 rounded border-primary/30 bg-surface text-primary focus:ring-primary/50"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-text/80 font-montserrat">
@@ -166,10 +104,9 @@ export function LoginForm() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="elegant-button w-full py-2 px-4 rounded-md shadow-sm text-sm font-medium disabled:opacity-50 font-andika"
+            className="elegant-button w-full py-2 px-4 rounded-md shadow-sm text-sm font-medium font-andika"
           >
-            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            Iniciar Sesión
           </button>
         </div>
 

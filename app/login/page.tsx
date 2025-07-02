@@ -1,7 +1,7 @@
 "use client"
 
 import { useSearchParams } from 'next/navigation'
-import { LoginForm } from './login-form'
+import LoginForm from './login-form'
 import { useEffect, useState } from 'react'
 import { CheckCircle } from 'lucide-react'
 
