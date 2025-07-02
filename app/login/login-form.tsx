@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Mail, Lock, AlertCircle, Heart } from "lucide-react"
+import { Mail, Lock, AlertCircle, Heart, Chrome, Facebook } from "lucide-react"
 import { supabase } from "../lib/supabase"
 
 export function LoginForm() {
@@ -53,6 +53,24 @@ export function LoginForm() {
           ? "Credenciales de inicio de sesión inválidas"
           : "Error al iniciar sesión. Por favor, inténtalo de nuevo.",
       )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    setError("")
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) throw error
+    } catch (err: any) {
+      setError(`Error al iniciar sesión con ${provider}: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -146,27 +164,29 @@ export function LoginForm() {
         </div>
 
         <div className="mt-6">
-      <div className="flex items-center justify-center">
-        <div className="flex-grow border-t border-primary/20"></div>
-        <span className="mx-4 text-text/60 font-montserrat text-sm">O continúa con</span>
-        <div className="flex-grow border-t border-primary/20"></div>
-      </div>
+          <div className="flex items-center justify-center">
+            <div className="flex-grow border-t border-primary/20"></div>
+            <span className="mx-4 text-text/60 font-montserrat text-sm">O continúa con</span>
+            <div className="flex-grow border-t border-primary/20"></div>
+          </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
-        >
-          Google
-        </button>
-        <button
-          type="button"
-          className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
-        >
-          Facebook
-        </button>
-      </div>
-    </div>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleSocialLogin('google')}
+              className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
+            >
+              <Chrome className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin('facebook')}
+              className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
+            >
+              <Facebook className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </form>
 
       <p className="mt-8 text-center text-sm text-text/60 font-montserrat">
