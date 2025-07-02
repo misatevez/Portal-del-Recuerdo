@@ -36,14 +36,15 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut()
-      router.push('/')
-      router.refresh()
-      setMenuAbierto(false) // Close mobile menu after logout
+      await fetch('/auth/logout', {
+        method: 'POST',
+      });
+      // The server handles the redirect. We refresh the router to sync client-side state.
+      router.refresh();
+      setMenuAbierto(false);
     } catch (error) {
-      console.error("Error during logout:", error)
-      // Show error to user but don't throw
-      alert("Error al cerrar sesión. Por favor, intenta de nuevo.")
+      console.error("Error during logout:", error);
+      alert("Error al cerrar sesión. Por favor, intenta de nuevo.");
     }
   }
 

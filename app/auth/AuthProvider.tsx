@@ -35,34 +35,42 @@ export default function AuthProvider({ children, session: serverSession }: { chi
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      router.refresh()
+      if (event === "SIGNED_OUT") {
+        setUser(null)
+        router.refresh()
+      } else if (session) {
+        setUser(session.user)
+        router.refresh()
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [router, supabase.auth])
 
   useEffect(() => {
-    if (user?.id) {
-      setIsLoading(true)
-      supabase
-        .from("profiles")
-        .select("nombre, credits")
-        .eq("id", user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (data) {
-            setUser((currentUser) => ({ ...currentUser, ...data }))
-          }
-          if (error && error.code !== "PGRST116") {
-            console.error("Error fetching user profile:", error)
-          }
-          setIsLoading(false)
-        })
-    } else {
+    if (!user?.id) {
       setIsLoading(false)
+      return
     }
+
+    setIsLoading(true)
+    supabase
+      .from("profiles")
+      .select("nombre, credits")
+      .eq("id", user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (data) {
+          setUser((currentUser) => {
+            if (!currentUser) return null
+            return { ...currentUser, ...data }
+          })
+        }
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching user profile:", error)
+        }
+        setIsLoading(false)
+      })
   }, [user?.id, supabase])
 
   const value = {
