@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useState, useCallback } from 'react'
-import { useSupabase } from '@/app/auth/AuthProvider'
+import { useAuth } from '@/app/auth/AuthProvider'
 import toast from 'react-hot-toast'
 import { UserPlus, Search } from 'lucide-react'
-
 
 type UserProfile = {
   id: string;
@@ -16,31 +15,21 @@ type UserProfile = {
   created_at: string;
 }
 
-// Tipos para los datos crudos que vienen de la API
-type RawUser = {
-  id: string;
-  email?: string;
-  created_at: string;
-};
-
-type Profile = {
-  id: string;
-  nombre: string | null;
-  credits: number;
-  privacidad: 'public' | 'private';
-  role: 'admin' | 'user';
-};
-
 export default function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [creditAmounts, setCreditAmounts] = useState<{ [key: string]: number }>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const { session } = useSupabase();
+  const { user, supabase } = useAuth();
 
   const fetchUsers = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
         toast.error('No estás autenticado.');
@@ -48,35 +37,18 @@ export default function UsersPage() {
         return;
       }
 
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/users/list', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await response.json();
+      const data: UserProfile[] = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al cargar los datos desde la API.');
+        throw new Error((data as any).error || 'Error al cargar los datos desde la API.');
       }
 
-      const { users: rawUsers, profiles }: { users: RawUser[]; profiles: Profile[] } = data;
-
-      const profilesMap = new Map<string, Profile>(profiles.map((p) => [p.id, p]));
-
-      const combinedData: UserProfile[] = rawUsers.map((user) => {
-        const profile = profilesMap.get(user.id);
-        return {
-          id: user.id,
-          email: user.email || null,
-          full_name: profile?.nombre || 'Sin nombre',
-          credits: profile?.credits ?? 0,
-          privacidad: profile?.privacidad || 'private',
-          role: profile?.role || 'user',
-          created_at: user.created_at,
-        };
-      });
-
-            const sortedData = combinedData.sort((a, b) => {
+      const sortedData = data.sort((a, b) => {
         const timeA = new Date(a.created_at || 0).getTime();
         const timeB = new Date(b.created_at || 0).getTime();
         return timeB - timeA;
@@ -85,19 +57,17 @@ export default function UsersPage() {
       setUsers(sortedData);
 
     } catch (error: any) {
-            toast.error(`Error al procesar usuarios: ${error.message}`);
+      toast.error(`Error al procesar usuarios: ${error.message}`);
       console.error('Error fetching and processing users:', error);
       setUsers([]);
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [user, supabase]);
 
   useEffect(() => {
-    if (session) {
-      fetchUsers();
-    }
-  }, [session, fetchUsers]);
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleAssignCredits = async (userId: string) => {
     const amount = creditAmounts[userId];
@@ -109,9 +79,11 @@ export default function UsersPage() {
     const toastId = toast.loading('Asignando créditos...');
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
         toast.error('No estás autenticado.');
+        toast.dismiss(toastId);
         return;
       }
 
@@ -139,15 +111,14 @@ export default function UsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    (user.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (user.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+  const filteredUsers = users.filter(u =>
+    (u.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (u.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   return (
     <div>
       <h1 className="text-3xl font-andika text-primary mb-8">Gestión de Usuarios</h1>
-
       <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -162,7 +133,6 @@ export default function UsersPage() {
           />
         </div>
       </div>
-
       <div className="elegant-card p-6 rounded-lg">
         {loading ? (
           <div className="p-8 text-center">
@@ -185,35 +155,35 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-primary/10">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-surface/50">
+                {filteredUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-surface/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="ml-3">
-                          <p className="text-sm font-medium text-text/80 font-montserrat">{user.full_name}</p>
-                          <p className="text-xs text-text/60 font-montserrat">{user.email}</p>
+                          <p className="text-sm font-medium text-text/80 font-montserrat">{u.full_name}</p>
+                          <p className="text-xs text-text/60 font-montserrat">{u.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text/80 font-montserrat">{user.credits}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text/80 font-montserrat">{u.credits}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${user.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary/80'}`}>
-                        {user.role}
+                      <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${u.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-primary/10 text-primary/80'}`}>
+                        {u.role}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text/60 font-montserrat">
-                      {new Date(user.created_at).toLocaleDateString()}
+                      {new Date(u.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
-                          value={creditAmounts[user.id] || ''}
-                          onChange={(e) => setCreditAmounts({ ...creditAmounts, [user.id]: parseInt(e.target.value, 10) })}
+                          value={creditAmounts[u.id] || ''}
+                          onChange={(e) => setCreditAmounts({ ...creditAmounts, [u.id]: parseInt(e.target.value, 10) })}
                           className="w-24 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 elegant-input"
                           placeholder="Cant."
                         />
-                        <button onClick={() => handleAssignCredits(user.id)} className="elegant-action-button" title="Asignar Créditos">
+                        <button onClick={() => handleAssignCredits(u.id)} className="elegant-action-button" title="Asignar Créditos">
                           <UserPlus className="h-4 w-4" />
                         </button>
                       </div>

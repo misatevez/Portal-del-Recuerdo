@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     }
 
     // Aplanamos la estructura para que sea más fácil de usar en el frontend
-    const formattedData = data.map(p => {
+    const formattedData = data.map((p: any) => {
       // La relación 'users' puede ser un objeto o un array según la consulta.
       // Nos aseguramos de manejar ambos casos.
       const email = Array.isArray(p.users) ? p.users[0]?.email : p.users?.email;
