@@ -14,6 +14,6 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirige al usuario a la página de inicio de sesión o a donde prefieras
-  return NextResponse.redirect(new URL('/login?verified=true', request.url))
+  // Redirige al usuario a la página de perfil después de un inicio de sesión exitoso
+  return NextResponse.redirect(new URL('/perfil', request.url))
 } 

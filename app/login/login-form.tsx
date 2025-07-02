@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Mail, Lock, AlertCircle, Heart, Chrome, Facebook } from "lucide-react"
+import { Mail, Lock, AlertCircle, Heart } from "lucide-react"
 import { supabase } from "../lib/supabase"
 
 export function LoginForm() {
@@ -176,14 +176,14 @@ export function LoginForm() {
               onClick={() => handleSocialLogin('google')}
               className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
             >
-              <Chrome className="w-5 h-5" />
+              Google
             </button>
             <button
               type="button"
               onClick={() => handleSocialLogin('facebook')}
               className="w-full inline-flex justify-center py-2 px-4 border border-primary/30 rounded-md shadow-sm bg-surface text-sm font-medium text-text/80 hover:bg-surface/80 font-montserrat"
             >
-              <Facebook className="w-5 h-5" />
+              Facebook
             </button>
           </div>
         </div>
