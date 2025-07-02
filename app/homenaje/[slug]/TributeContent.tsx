@@ -12,7 +12,7 @@ import { PhotoGallery } from "../../components/tributes/PhotoGallery"
 import { BackgroundMusic } from "../../components/tributes/BackgroundMusic"
 import { supabase } from "../../lib/supabase"
 import toast from "react-hot-toast"
-import type { Tribute as BaseTribute, Comment, Photo, Candle } from "../../../types"
+import type { Tribute as BaseTribute, Comment, Photo, Candle } from "../../types"
 import type { User } from "../../auth/AuthProvider"
 
 // Extend the base Tribute type to include our new property

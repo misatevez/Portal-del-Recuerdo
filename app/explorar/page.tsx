@@ -229,7 +229,6 @@ export default function ExplorePage() {
                   isOwner={false}
                   onEdit={() => {}}
                   onDelete={() => {}}
-                  onTogglePremium={() => {}}
                 />
               ))}
             </div>

@@ -1,155 +1,113 @@
-// Importar el tipo User de Supabase
-import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { ReactNode } from 'react'
+import type { User as SupabaseUser } from "@supabase/supabase-js"
+import type React from "react"
 
-// Tipos para las tablas principales
-export type User = SupabaseUser & {
-  nombre?: string;
-  role?: string;
-  is_banned?: boolean;
+export interface User extends SupabaseUser {
+  // Add any additional properties specific to your User type
+  // For example:
+  // customProperty?: string;
 }
 
-// O extender el tipo User de Supabase si necesitas campos adicionales
-export type ExtendedUser = SupabaseUser & {
-  role?: string;
-  is_banned?: boolean;
+export interface Profile {
+  id: string
+  nombre: string
+  notificaciones?: boolean
+  privacidad?: "public" | "private"
 }
 
-export type Profile = {
-  privacidad: any;
-  notificaciones: any;
-  id: string;
-  user_id: string;
-  nombre: string;
-  is_banned?: boolean;
-  created_at: string;
-  updated_at: string;
+export interface Tribute {
+  id: string
+  slug: string
+  nombre: string
+  fecha_nacimiento: string
+  fecha_fallecimiento: string
+  ubicacion?: string
+  biografia?: string
+  imagen_principal?: string
+  created_by: string
+  es_premium: boolean
+  estado: "borrador" | "publicado"
+  comments?: Comment[]
+  candles?: Candle[]
+  photos?: Photo[]
 }
 
-export type Tribute = {
-  created_by: string;
-  photos: any[];
-  candles: any[];
-  comments: any[];
-  id: string;
-  titulo: string;
-  nombre: string;
-  descripcion: string;
-  fecha_nacimiento?: string;
-  fecha_fallecimiento?: string;
-  slug: string;
-  user_id: string;
-  is_premium: boolean;
-  premium_until?: string;
-  created_at: string;
-  updated_at: string;
-  imagen_url?: string;
-  ubicacion?: string;
-  biografia?: string;
-  imagen_principal?: string;
-}
-
-export type Comment = {
+export interface Comment {
   id: string;
   contenido: string;
+  created_at: string;
   user_id: string;
   tribute_id: string;
-  created_at: string;
   estado_check: "pendiente" | "aprobado" | "rechazado";
-  profiles?: {
+  profiles: {
     nombre: string;
   };
 }
 
-export type Photo = {
+export interface Candle {
   id: string;
-  tribute_id: string;
-  url: string;
-  descripcion?: string;
-  created_at: string;
-  user_id: string;
-}
-
-export type Candle = {
-  id: string;
-  tribute_id: string;
-  user_id: string;
+  author_name?: string | null;
   mensaje?: string;
-  created_at: string;
-}
-
-export type UserCredit = {
-  id: string;
   user_id: string;
-  created_at: string;
-  used_at?: string;
-  tribute_id?: string;
+  tribute_id: string;
+  profiles: {
+    nombre: string;
+  };
 }
 
-// Tipos para props de componentes
-export interface ProfileContentProps {
-  user: User;
-  profile: Profile;
-  tributes: Tribute[];
-  activity: any[];
-  userCredits: number;
-}
-
-// Tipo para CTAButton
-export interface CTAButtonProps {
-  href: string;
-  className?: string;
-  children: ReactNode;
-}
-
-// Tipo para TributeCard
-export interface TributeCardProps {
+export interface Photo {
   id: string;
-  slug: string;
-  nombre: string;
-  fechaNacimiento: string;
-  fechaFallecimiento: string;
-  imagen: string;
-  isOwner?: boolean;
-  onEdit?: () => void;
-  onDelete?: () => void;
+  url: string;
+  descripcion: string;
+  tribute_id: string;
+  created_at: string;
+  user_id: string;
 }
 
-// Tipo para FeatureCard
-export interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
+export interface PremiumCredit {
+  id: string
+  user_id: string
+  tribute_id: string
+  credits: number
+  premium_start_date: string
+  premium_end_date: string
 }
 
-// Tipo para PaymentDialog
 export interface PaymentDialogProps {
-  planId: string;
-  planName: string;
-  price: number;
-  onClose: () => void;
-  onSuccess: () => void;
-  onError: (error: string) => void;
+  planId: string
+  planName: string
+  price: number
+  onClose: () => void
+  onSuccess: () => void
 }
 
-// Tipo para ShareButton
-export interface ShareButtonProps {
-  tributeSlug: string;
-  tributeName: string;
-  className?: string;
+export interface TributeFormBaseProps {
+  initialData?: {
+    nombre: string
+    fechaNacimiento: string
+    fechaFallecimiento: string
+    ubicacion: string
+    biografia: string
+    imagenPrincipal: File | null
+    isPremium?: boolean
+  }
+  onSubmit: (formData: any) => Promise<void>
+  buttonText: string
+  userCredits: number
+  onBuyCredit: () => void
 }
 
-// Tipo para BackgroundMusic
-export interface BackgroundMusicProps {
-  tributeId: string;
-  canEdit: boolean;
+export interface TributeHeaderProps {
+  tribute: Tribute
+  isOwner: boolean
+  onEdit: () => void
+  onDelete: () => void
+  onUpdatePremiumStatus: (esPremium: boolean) => void
+  onBuyCredit: () => void
 }
 
-export interface PhotoGalleryProps {
-  photos: Photo[]; // Asumiendo que 'Photo' ya está definido en tu archivo de tipos
-  onDelete: (photoId: string) => void; // Función para manejar la eliminación de fotos
-  onEdit: (photoId: string) => void; // Función para manejar la edición de fotos
-} 
+export interface TributeBiographyProps {
+  biografia?: string
+}
 
 export interface TributeActionsProps {
   onLightCandle: () => void;
@@ -158,38 +116,59 @@ export interface TributeActionsProps {
   name: string;
 }
 
-export interface TributeBiographyProps {
-  biografia: string;
+export interface CandleSectionProps {
+  candles: Candle[]
+  tributeId: string
 }
 
-export interface TributeCommentSectionProps {
-  comments: Comment[];
-  tributeId: string;
-  onCommentAdded: (newComment: Comment) => void;
-  user: User | null;
-  isOwner?: boolean;
+export interface PhotoGalleryProps {
+  photos: Photo[]
+  canEdit: boolean
+  onUpload: (file: File) => void
+  onDelete: (id: string) => void
+  isPremium?: boolean
+  photoLimit?: number | null
 }
 
-export interface TributeHeaderProps {
-  tribute: Tribute;
-  isOwner: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-  onUpdatePremiumStatus: (esPremium: boolean) => void;
-  onBuyCredit: () => void;
+export interface BackgroundMusicProps {
+  tributeId: string
+  canEdit: boolean
 }
 
-export interface TributeBiographyProps {
-  biografia: string;
-} 
+export interface ShareButtonProps {
+  tributeSlug: string
+  tributeName: string
+  className?: string
+}
+
+export interface CTAButtonProps {
+  href: string
+  className?: string
+  children: React.ReactNode
+}
+
+export interface FeatureCardProps {
+  icon: React.ReactNode
+  title: string
+  description: string
+}
+
+export interface ProfileContentProps {
+  user: User
+  profile: Profile
+  tributes: Tribute[]
+  activity: any[] // Podríamos definir un tipo más específico para la actividad si es necesario
+  userCredits: number
+}
 
 export interface SearchFilters {
-  year?: string;
-  location?: string;
-  sortBy?: "recent" | "candles" | "name";
+  year?: string
+  location?: string
+  sortBy?: "recent" | "candles" | "name"
 }
 
 export interface PaginationOptions {
-  page: number;
-  pageSize: number;
+  page: number
+  pageSize: number
 }
+
