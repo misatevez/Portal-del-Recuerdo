@@ -17,18 +17,19 @@ export function LoginForm() {
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    console.log('[LoginForm] Attempting login with email/password.');
+    setError("");
+    setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
       if (error) {
-        // Verificar si el error es porque el email no está verificado
+        console.error('[LoginForm] Supabase auth error:', error.message);
         if (error.message.includes("Email not confirmed")) {
           setError(
             <span>
@@ -38,43 +39,52 @@ export function LoginForm() {
                 aquí
               </Link>
             </span>
-          )
-          return
+          );
+          return;
         }
-        throw error
+        throw error;
       }
 
-      // Redirect to profile page on success
-      router.push("/perfil")
-      router.refresh() // Refresh the page to update the session state
+      console.log('[LoginForm] Login successful. Redirecting to /perfil...');
+      router.push("/perfil");
+      router.refresh();
     } catch (err: any) {
+      console.error('[LoginForm] Catch block error:', err.message);
       setError(
         err.message === "Invalid login credentials"
           ? "Credenciales de inicio de sesión inválidas"
           : "Error al iniciar sesión. Por favor, inténtalo de nuevo.",
-      )
+      );
     } finally {
-      setLoading(false)
+      console.log('[LoginForm] Login process finished.');
+      setLoading(false);
     }
-  }
+  };
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
-    setError("")
-    setLoading(true)
+    console.log(`[LoginForm] Attempting social login with ${provider}.`);
+    setError("");
+    setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
-      if (error) throw error
+      });
+      if (error) {
+        console.error(`[LoginForm] Social login error with ${provider}:`, error.message);
+        throw error;
+      }
+      console.log(`[LoginForm] Redirecting to ${provider} for authentication.`);
     } catch (err: any) {
-      setError(`Error al iniciar sesión con ${provider}: ${err.message}`)
+      console.error(`[LoginForm] Catch block error for ${provider}:`, err.message);
+      setError(`Error al iniciar sesión con ${provider}: ${err.message}`);
     } finally {
-      setLoading(false)
+      console.log(`[LoginForm] Social login process for ${provider} finished.`);
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-md">

@@ -33,19 +33,42 @@ export default function AuthProvider({ children, session: serverSession }: { chi
     })
   }
 
+  // This effect ensures that the local user state is always in sync with the session
+  // provided by the server. This is the "source of truth".
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        setUser(null)
-        router.refresh()
-      } else if (session) {
-        setUser(session.user)
-        router.refresh()
-      }
-    })
+    setUser(serverSession?.user ?? null);
+  }, [serverSession]);
 
-    return () => subscription.unsubscribe()
-  }, [router, supabase.auth])
+  // This is the definitive 3-rule implementation.
+  useEffect(() => {
+    console.log('[AuthProvider] Setting up definitive listener.');
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, clientSession) => {
+      console.log(`[AuthProvider] Event: ${event}`);
+
+      // Rule 1: Always ignore INITIAL_SESSION on the client to prevent flicker.
+      if (event === 'INITIAL_SESSION') {
+        console.log('[AuthProvider] -> Rule 1: Ignoring INITIAL_SESSION.');
+        return;
+      }
+
+      // Rule 2: Handle SIGNED_IN for a fast UI response.
+      if (event === 'SIGNED_IN') {
+        console.log('[AuthProvider] -> Rule 2: SIGNED_IN detected. Optimistically updating UI and refreshing server data.');
+        setUser(clientSession?.user ?? null);
+        router.refresh();
+      } 
+      // Rule 3: For all other events, act as a watchdog.
+      else if (clientSession?.access_token !== serverSession?.access_token) {
+        console.log(`[AuthProvider] -> Rule 3: Watchdog detected mismatch on event '${event}'. Forcing refresh.`);
+        router.refresh();
+      }
+    });
+
+    return () => {
+      console.log('[AuthProvider] Unsubscribing definitive listener.');
+      subscription.unsubscribe();
+    };
+  }, [router, supabase, serverSession]);
 
   useEffect(() => {
     if (!user?.id) {

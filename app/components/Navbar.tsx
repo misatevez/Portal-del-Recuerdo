@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Menu, X, Shield, LogOut, Star } from "lucide-react"
 import { useAuth } from "../auth/AuthProvider"
@@ -12,7 +11,6 @@ export default function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const { user, supabase } = useAuth()
-  const router = useRouter()
   const navLinkClass = "text-text hover:text-primary transition-colors font-andika"
 
   useEffect(() => {
@@ -34,19 +32,7 @@ export default function Navbar() {
     fetchAdminStatus()
   }, [user, supabase])
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/auth/logout', {
-        method: 'POST',
-      });
-      // The server handles the redirect. We refresh the router to sync client-side state.
-      router.refresh();
-      setMenuAbierto(false);
-    } catch (error) {
-      console.error("Error during logout:", error);
-      alert("Error al cerrar sesión. Por favor, intenta de nuevo.");
-    }
-  }
+
 
   return (
     <nav className="bg-surface/90 backdrop-blur-md border-b border-[#c9ab81]/20 fixed w-full z-50 font-andika">
@@ -89,9 +75,11 @@ export default function Navbar() {
                     <span>{user?.credits ?? 0}</span>
                   </div>
                 </div>
-                <button onClick={handleLogout} className={`${navLinkClass} p-2`} aria-label="Cerrar Sesión">
-                  <LogOut className="w-4 h-4" />
-                </button>
+                <form action="/auth/logout" method="POST">
+                  <button type="submit" className={`${navLinkClass} p-2`} aria-label="Cerrar Sesión">
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </form>
               </>
             ) : (
               <>
@@ -145,13 +133,15 @@ export default function Navbar() {
                   <Star className="w-4 h-4" />
                   <span>{user?.credits ?? 0} créditos</span>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="block px-3 py-2 text-text hover:text-primary rounded-md flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Cerrar Sesión
-                </button>
+                <form action="/auth/logout" method="POST">
+                  <button
+                    type="submit"
+                    className="w-full text-left block px-3 py-2 text-text hover:text-primary rounded-md flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Cerrar Sesión
+                  </button>
+                </form>
               </>
             ) : (
               <>

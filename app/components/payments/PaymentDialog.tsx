@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Loader } from "lucide-react"
-import { useSupabase } from "../../auth/AuthProvider"
+import { useAuth } from "../../auth/AuthProvider"
 import { toast } from "react-hot-toast"
 import { useRouter } from "next/navigation"
 
@@ -17,8 +17,7 @@ interface PaymentDialogProps {
 
 export function PaymentDialog({ planId, planName, price, onClose, onSuccess, onError }: PaymentDialogProps) {
   const [loading, setLoading] = useState(false)
-  const { session } = useSupabase()
-  const user = session?.user
+  const { user } = useAuth()
   const router = useRouter()
 
   const handlePayment = async () => {
