@@ -6,7 +6,12 @@ import { supabase } from "../../lib/supabase"
 import { TributeContent } from "./TributeContent"
 import type { Tribute } from "../../types"
 
-export default function TributeData({ params }: { params: { slug: string } }) {
+interface TributeDataProps {
+  params: { slug: string };
+  setUserCredits: (credits: number) => void;
+}
+
+export default function TributeData({ params, setUserCredits }: TributeDataProps) {
   const [tribute, setTribute] = useState<Tribute | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -78,6 +83,6 @@ export default function TributeData({ params }: { params: { slug: string } }) {
     return null
   }
 
-  return <TributeContent tribute={tribute} user={session?.user || null} candles={tribute.candles} photos={tribute.photos} comments={tribute.comments} />
+  return <TributeContent tribute={tribute} user={session?.user || null} candles={tribute.candles} photos={tribute.photos} comments={tribute.comments} setUserCredits={setUserCredits} />
 }
 

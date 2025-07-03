@@ -56,7 +56,7 @@ export default function RecentTributes() {
               nombre={tribute.nombre}
               fechaNacimiento={tribute.fecha_nacimiento || ""}
               fechaFallecimiento={tribute.fecha_fallecimiento || ""}
-              imagen={tribute.imagen_url || "/placeholder.svg"}
+              imagen={tribute.imagen_principal || "/placeholder.svg"}
               isOwner={false}
               onEdit={() => {}}
               onDelete={() => {}}

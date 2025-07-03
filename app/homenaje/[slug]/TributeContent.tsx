@@ -22,18 +22,20 @@ interface Tribute extends BaseTribute {
 
 interface TributeContentProps {
   tribute: Tribute
+  user: User | null
   candles: Candle[]
   photos: Photo[]
   comments: Comment[]
+  setUserCredits: (credits: number) => void
 }
 
-export function TributeContent({ tribute, candles: initialCandles, photos, comments }: TributeContentProps) {
+export function TributeContent({ tribute, user, candles: initialCandles, photos, comments, setUserCredits }: TributeContentProps) {
   const [localComments, setLocalComments] = useState<Comment[]>(comments || [])
   const [localPhotos, setLocalPhotos] = useState<Photo[]>(photos || [])
   const [isOwner, setIsOwner] = useState(false)
   const [isPremium, setIsPremium] = useState(tribute.es_premium || false)
   const router = useRouter()
-  const { user, setUserCredits } = useAuth()
+
   const [isFeatured, setIsFeatured] = useState(tribute.is_featured || false)
   const commentsSectionRef = useRef<HTMLDivElement>(null)
 

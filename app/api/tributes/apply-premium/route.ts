@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
     
     // 2. Verificar si el homenaje ya es premium
-    if (tribute.is_premium) {
+    if (tribute.es_premium) {
       return NextResponse.json({ 
         error: 'Este homenaje ya es premium' 
       }, { status: 400 })
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
         const { error: tributeError } = await supabaseAdmin
           .from('tributes')
           .update({
-            is_premium: true,
+            es_premium: true,
             premium_until: premiumUntil
           })
           .eq('id', tributeId)

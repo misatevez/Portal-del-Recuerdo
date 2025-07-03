@@ -38,7 +38,7 @@ export default function DashboardPage() {
       const { count: premiumTributes } = await supabase
         .from('tributes')
         .select('*', { count: 'exact', head: true })
-        .eq('is_premium', true)
+        .eq('es_premium', true)
       
       // Obtener estadísticas de comentarios
       const { count: totalComments } = await supabase
@@ -278,11 +278,11 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
-                        tribute.is_premium 
+                        tribute.es_premium 
                           ? 'bg-yellow-100 text-yellow-800' 
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {tribute.is_premium ? 'Premium' : 'Estándar'}
+                        {tribute.es_premium ? 'Premium' : 'Estándar'}
                       </span>
                     </td>
                   </tr>

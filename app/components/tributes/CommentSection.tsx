@@ -50,8 +50,7 @@ export function CommentSection({ comments, tributeId, onCommentAdded, user, isOw
           tribute_id: tributeId,
           user_id: user.id,
           contenido: newComment.trim(),
-          estado_check: isOwner ? "aprobado" : "pendiente",
-          profiles: { nombre: user.nombre || user.email?.split('@')[0] || 'Usuario' },
+          estado_check: isOwner ? "aprobado" : "pendiente"
         })
         .select("*, profiles:user_id(nombre)")
         .single()
@@ -60,24 +59,10 @@ export function CommentSection({ comments, tributeId, onCommentAdded, user, isOw
 
       setNewComment("")
       
-      // Si es el propietario, añadir directamente a los comentarios aprobados
+      onCommentAdded(data as Comment);
       if (isOwner) {
-        // Crear una copia completa con el estado correcto
-        const newCommentWithProfile = { 
-          ...data, 
-          estado_check: "aprobado",
-          profiles: { nombre: user.nombre || user.email?.split('@')[0] || 'Usuario' }
-        };
-        
-        // Notificar al componente padre con el comentario actualizado
-        onCommentAdded(newCommentWithProfile);
-        
-        // Forzar una actualización del componente
-        setForceUpdate(prev => prev + 1);
-        
         toast.success("Tu comentario ha sido publicado");
       } else {
-        onCommentAdded(data as Comment);
         toast.success("Tu comentario ha sido enviado y está pendiente de aprobación");
       }
     } catch (err) {

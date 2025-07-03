@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import type { Candle as CandleType } from '../../../types'
+import type { Candle as CandleType } from '../../types'
 import { CandleDialog } from './CandleDialog'
 import { AnimatedCandle } from '../AnimatedCandle'
 import toast from 'react-hot-toast'

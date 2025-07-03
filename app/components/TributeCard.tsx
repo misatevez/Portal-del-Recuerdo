@@ -14,7 +14,8 @@ interface TributeCardProps {
   isOwner?: boolean
   isPremium?: boolean
   onEdit?: () => void
-  onDelete?: () => void
+  onDelete?: () => void;
+  onTogglePremium?: () => Promise<void>;
   actionSlot?: React.ReactNode
 }
 

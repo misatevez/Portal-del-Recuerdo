@@ -27,9 +27,9 @@ export async function GET(request: Request) {
     // Actualizar todos los homenajes cuyo período premium ha expirado
     const { data, error } = await supabaseAdmin
       .from('tributes')
-      .update({ is_premium: false })
+      .update({ es_premium: false })
       .lt('premium_until', now)
-      .eq('is_premium', true)
+      .eq('es_premium', true)
       .select('id, nombre')
     
     if (error) {

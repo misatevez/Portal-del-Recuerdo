@@ -186,18 +186,18 @@ export function ProfileContent({
                           fechaFallecimiento={tribute.fecha_fallecimiento}
                           imagen={tribute.imagen_principal || "/placeholder.svg"}
                           isOwner={true}
-                          isPremium={tribute.is_premium}
+                          isPremium={tribute.es_premium}
                           onEdit={() => handleEdit(tribute.slug)}
                           onDelete={() => handleDelete(tribute.id)}
                           actionSlot={
-                            !tribute.is_premium && userCredits > 0 ? (
+                            !tribute.es_premium && userCredits > 0 ? (
                               <CreditManager
                                 userId={user.id}
                                 tribute={tribute}
                                 renderAs="button"
                                 onCreditApplied={() => {
                                   const updatedTributes = tributes.map((t) =>
-                                    t.id === tribute.id ? { ...t, is_premium: true } : t
+                                    t.id === tribute.id ? { ...t, es_premium: true } : t
                                   )
                                   setTributes(updatedTributes)
                                 }}

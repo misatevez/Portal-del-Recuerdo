@@ -57,7 +57,7 @@ export function CreditManager({
       // Actualizar el estado premium del tributo
       await supabase
         .from("tributes")
-        .update({ is_premium: true })
+        .update({ es_premium: true })
         .eq("id", tribute.id)
 
       // Decrementar los créditos del usuario en la tabla profiles

@@ -48,7 +48,7 @@ export function EditTributeForm({ slug, onClose }: EditTributeFormProps) {
         fecha_nacimiento: formData.fechaNacimiento,
         fecha_fallecimiento: formData.fechaFallecimiento,
         biografia: formData.biografia,
-        is_premium: formData.isPremium,
+        es_premium: formData.isPremium,
         ubicacion: formData.ubicacion
       }
 
@@ -106,7 +106,7 @@ export function EditTributeForm({ slug, onClose }: EditTributeFormProps) {
         ubicacion: tribute.ubicacion || "",
         biografia: tribute.biografia || "",
         imagenPrincipal: null,
-        isPremium: tribute.is_premium,
+        isPremium: tribute.es_premium,
       }}
       currentImageUrl={tribute.imagen_principal}
       onSubmit={handleSubmit}

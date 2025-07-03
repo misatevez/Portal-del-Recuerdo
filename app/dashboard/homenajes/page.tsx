@@ -39,7 +39,7 @@ export default function TributesPage() {
       }
       
       if (filtros.isPremium) {
-        query = query.eq('is_premium', filtros.isPremium === 'premium')
+        query = query.eq('es_premium', filtros.isPremium === 'premium')
       }
       
       // Aplicar ordenamiento
@@ -97,14 +97,14 @@ export default function TributesPage() {
     try {
       const { error } = await supabase
         .from('tributes')
-        .update({ is_premium: !isPremium })
+        .update({ es_premium: !isPremium })
         .eq('id', tributeId)
       
       if (error) throw error
       
       // Actualizar la lista de homenajes
       setTributes(tributes.map(tribute => 
-        tribute.id === tributeId ? { ...tribute, is_premium: !isPremium } : tribute
+        tribute.id === tributeId ? { ...tribute, es_premium: !isPremium } : tribute
       ))
       
       toast.success(`Homenaje ${!isPremium ? 'marcado como premium' : 'desmarcado como premium'} correctamente`)
@@ -270,9 +270,9 @@ export default function TributesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full font-montserrat ${
-                        tribute.is_premium 
+                        tribute.es_premium 
                       }`}>
-                        {tribute.is_premium ? 'Premium' : 'Estándar'}
+                        {tribute.es_premium ? 'Premium' : 'Estándar'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -285,12 +285,12 @@ export default function TributesPage() {
                           <Eye className="w-4 h-4" />
                         </Link>
                         <button   
-                          onClick={() => togglePremiumStatus(tribute.id, tribute.is_premium)}
+                          onClick={() => togglePremiumStatus(tribute.id, tribute.es_premium)}
                           className={`p-1.5 rounded-full elegant-action-button hover:text-white ${
-                            tribute.is_premium 
+                            tribute.es_premium 
                              
                           }`}
-                          title={tribute.is_premium ? 'Quitar premium' : 'Marcar como premium'}
+                          title={tribute.es_premium ? 'Quitar premium' : 'Marcar como premium'}
                         >
                           <Star className="w-4 h-4" />
                         </button>
